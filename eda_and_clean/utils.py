@@ -48,3 +48,16 @@ def print_dataframe_as_dataframe_definition(df: pd.DataFrame) -> None:
     # replace "nan" with "np.nan"
     df_text = df_text.replace("nan", "np.nan")
     return df_text
+
+def structure_concated_dataframe(_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Structures a dataframe that has been concated.
+    :param df: Pandas dataframe
+    :return: Pandas dataframe
+    """
+    df = _df.copy()
+    df = df.reset_index(drop=True)
+    for col in ['level_0', 'index']:
+        if col in df.columns:
+            df = df.drop(columns=col)
+    return df

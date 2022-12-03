@@ -4,7 +4,8 @@ from eda_and_beyond.eda_tools import histograms_numeric_columns
 from .chart import plotly_heatmap, line_plotly
 from klib import cat_plot
 from operator import attrgetter
-from .utils import filter_non_capitalized_words_from_list
+from .utils import filter_non_capitalized_words_from_list, structure_concated_dataframe
+import warnings
 
 
 class eda_class:
@@ -22,10 +23,10 @@ class eda_class:
 
         # Identifying dtypes
         self.DTYPES["boolean_like_columns"] = self.identify_boolean_like_columns()
+        self.DTYPES["datetime"] = self.identify_datetime_columns()
         self.DTYPES[
             "categorical_like_columns"
         ] = self.identify_categorical_like_columns()
-        self.DTYPES["datetime_like_columns"] = self.identify_datetime_like_columns()
         self.DTYPES["potential_uid_columns"] = self.find_unique_identifier_columns()
 
         # Interim calculations
@@ -37,6 +38,7 @@ class eda_class:
         )
 
         # Downcasting options
+        # Note: Int column cannot contain NaN values
         self.DOWNCASTING[
             "to_float32"
         ] = self.determine_candidates_for_float32_conversion()
@@ -67,6 +69,7 @@ class eda_class:
 
         # Duplicates
         self.DUPLICATES["redundant_columns"] = self.identify_redundant_columns()
+        self.DUPLICATES["duplicate_rows"] = self.identify_duplicate_rows()
 
         # Data analysis
         self.DATA_ANALYSIS["plotly_correlation_numerical"] = plotly_heatmap(
@@ -87,9 +90,13 @@ class eda_class:
             self.categorical_data = self.DTYPES["categorical_like_columns"]
         else:
             self.categorical_data = categorical_data
-        self.DATA_ANALYSIS["categorical_plot"] = cat_plot(
-            self.raw_input[self.categorical_data]
-        ).figure
+        try:
+            self.DATA_ANALYSIS["categorical_plot"] = cat_plot(
+                self.raw_input[self.categorical_data]
+            ).figure
+        except:
+            warnings.warn("Categorical plot failed")
+            pass
         self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
             _df=self.raw_input
         )
@@ -103,7 +110,7 @@ class eda_class:
             columns=["col", "freq", "max_value_of_diff_between_periods"]
         )
 
-        for date_col in self.DTYPES["datetime_like_columns"]:
+        for date_col in self.DTYPES["datetime"]:
             df_temp = _df.copy()
             df_temp[date_col] = pd.to_datetime(df_temp[date_col])
 
@@ -128,7 +135,7 @@ class eda_class:
                     [df_datetime_continuity, df_datetime_continuity_temp], axis=0
                 )
 
-        return df_datetime_continuity
+        return structure_concated_dataframe(df_datetime_continuity)
 
     def generate_dataframe_describe(self, _df: pd.DataFrame) -> pd.DataFrame:
         df = _df.copy()
@@ -218,7 +225,7 @@ class eda_class:
         df_output = self.convert_float_to_percentage_in_dataframe(
             _df=df_output, cols=["percentage_missing_values"]
         )
-        return df_output
+        return structure_concated_dataframe(df_output)
 
     def generate_dataframe_with_percentage_of_non_missing_values(self) -> pd.DataFrame:
         df_output = self.generate_dataframe_with_percentage_of_missing_values(
@@ -228,7 +235,7 @@ class eda_class:
             columns={"percentage_missing_values": "percentage_non_missing_values"}
         )
         df_output = 1 - df_output
-        return df_output
+        return structure_concated_dataframe(df_output)
 
     def convert_float_to_percentage_in_dataframe(
         self, _df: pd.DataFrame, cols: list
@@ -289,10 +296,18 @@ class eda_class:
             len_post_dropna = len(df_temp)
 
             # Now check if the column is redundant
-            if len(df[col].unique()) == 1:
+            if len(df_temp[col].unique()) == 1:
                 redundant_columns_na_count[col] = len_pre_dropna - len_post_dropna
 
         return redundant_columns_na_count
+
+    def identify_duplicate_rows(self) -> pd.DataFrame:
+        df = self.raw_input.copy()
+        return (
+            df[df.duplicated(keep=False)]
+            .sort_values(by=df.columns.tolist())
+            .index.to_list()
+        )
 
     def make_upper_triangle_na(self, _df: pd.DataFrame) -> pd.DataFrame:
         df = _df.copy()
@@ -311,6 +326,11 @@ class eda_class:
             # Now check if the column is categorical like
             if len(df[col].unique()) > 2 and len(df[col].unique()) < 1 / 3 * len(df):
                 categorical_like_columns.append(col)
+
+        # Remove datetime columns from this
+        categorical_like_columns = list(
+            set(categorical_like_columns) - set(self.DTYPES["datetime"])
+        )
         return categorical_like_columns
 
     def make_diagonals_na(self, _df: pd.DataFrame) -> pd.DataFrame:
@@ -327,7 +347,7 @@ class eda_class:
         df_corr = self.make_upper_triangle_na(_df=df_corr)
         return df_corr
 
-    def identify_datetime_like_columns(self) -> pd.DataFrame:
+    def identify_datetime_columns(self) -> pd.DataFrame:
         df = self.raw_input.copy()
         df = df.apply(
             lambda col: pd.to_datetime(col, errors="ignore")
@@ -362,7 +382,7 @@ class eda_class:
         cols_uid = [
             "column_name",
             "unique_identifier_count",
-            "number_of_na",
+            "number_of_explicit_na",
             "number_of_duplicates",
         ]
         df_uid = pd.DataFrame(columns=cols_uid)
@@ -397,7 +417,7 @@ class eda_class:
                         ),
                     ]
                 )
-        return df_uid
+        return structure_concated_dataframe(_df=df_uid)
 
     def calculate_empirical_cdf(self, _df: pd.DataFrame, col: str) -> pd.DataFrame:
         df = _df[[col]].copy()
