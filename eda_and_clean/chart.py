@@ -2,6 +2,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Formatting for Plotly
+
 COLORS = {
     "darkgrey": "rgb(189,189,189)",
     "midgrey": "#AFAFAF",

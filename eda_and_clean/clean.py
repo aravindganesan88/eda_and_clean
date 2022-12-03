@@ -275,6 +275,8 @@ class clean_class:
             df[col] = df[col].str.replace("[^a-zA-Z]", " ")
             # Make empty string as na
             df[col] = df[col].replace("", np.nan)
+            # Remove words with length less than 3
+            df[col] = df[col].str.findall("\w{3,}").str.join(" ")
             # Determine if the column was impacted
             columns_impacted.append(col) if df[col].equals(
                 df_original[col]
