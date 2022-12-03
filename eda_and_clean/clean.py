@@ -89,11 +89,14 @@ class clean_class:
             df = self.drop_rows(_df=df, row_mask_to_drop=row_mask_to_drop)
 
         # Make certain entries as NA
-        for (
-            key,
-            value,
-        ) in dict_with_col_name_as_key_and_mask_as_value_to_make_na.items():
-            df = self.make_masked_entries_na(_df=df, row_mask_to_make_na=value, col=key)
+        if dict_with_col_name_as_key_and_mask_as_value_to_make_na != None:
+            for (
+                key,
+                value,
+            ) in dict_with_col_name_as_key_and_mask_as_value_to_make_na.items():
+                df = self.make_masked_entries_na(
+                    _df=df, row_mask_to_make_na=value, col=key
+                )
 
         self.OUTPUT = df.copy()
 
