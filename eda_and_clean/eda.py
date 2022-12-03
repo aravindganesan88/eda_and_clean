@@ -11,7 +11,7 @@ class eda_class:
     def __init__(self, _df: pd.DataFrame, categorical_data: list = None) -> None:
         df = _df.copy()
 
-        self.RAW_INPUT = df.copy()
+        self.raw_input = df.copy()
         self.DTYPES = {}
         self.DOWNCASTING = {}
         self.MISSING_VALUES = {}
@@ -30,7 +30,7 @@ class eda_class:
 
         # Interim calculations
         self.correlation_matrix_numerical = self.make_upper_triangle_na(
-            _df=self.make_diagonals_na(_df=self.RAW_INPUT.corr())
+            _df=self.make_diagonals_na(_df=self.raw_input.corr())
         )
         self.correlation_matrix_non_numerical = (
             self.get_correlation_of_non_numerical_columns()
@@ -58,7 +58,7 @@ class eda_class:
             "dates_continuity_check"
         ] = self.identify_if_dates_are_continuous()
         self.MISSING_VALUES["plotly_missing_values_heatmap"] = plotly_heatmap(
-            _df=self.RAW_INPUT.isnull(), title="Missing Values Heatmap"
+            _df=self.raw_input.isnull(), title="Missing Values Heatmap"
         )
         self.MISSING_VALUES["plotly_correlation_missing_values"] = plotly_heatmap(
             _df=self.generate_correlation_of_missing_values(),
@@ -78,8 +78,8 @@ class eda_class:
             title="Correlation Matrix Non Numerical",
         )
         self.DATA_ANALYSIS["histogram_matplotlib"] = histograms_numeric_columns(
-            df=self.RAW_INPUT,
-            numerical_columns=self.RAW_INPUT.select_dtypes(include="number"),
+            df=self.raw_input,
+            numerical_columns=self.raw_input.select_dtypes(include="number"),
         ).figure
 
         # Categorical plot
@@ -88,17 +88,17 @@ class eda_class:
         else:
             self.categorical_data = categorical_data
         self.DATA_ANALYSIS["categorical_plot"] = cat_plot(
-            self.RAW_INPUT[self.categorical_data]
+            self.raw_input[self.categorical_data]
         ).figure
         self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
-            _df=self.RAW_INPUT
+            _df=self.raw_input
         )
         self.DATA_ANALYSIS[
             "top_10_most_frequent_values"
         ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
 
     def identify_if_dates_are_continuous(self) -> bool:
-        _df = self.RAW_INPUT.copy()
+        _df = self.raw_input.copy()
         df_datetime_continuity = pd.DataFrame(
             columns=["col", "freq", "max_value_of_diff_between_periods"]
         )
@@ -194,22 +194,22 @@ class eda_class:
         return df_describe
 
     def generate_list_of_columns_with_null_values(self) -> list:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         return df.columns[df.isnull().any()].tolist()
 
     def generate_list_of_columns_with_no_null_values(self) -> list:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         return df.columns[df.notnull().all()].tolist()
 
     def generate_correlation_of_missing_values(self) -> pd.DataFrame:
-        df_null = self.RAW_INPUT.copy().isnull()
+        df_null = self.raw_input.copy().isnull()
         df_null = df_null[df_null.any(axis=1)]
         return df_null.corr()
 
     def generate_dataframe_with_percentage_of_missing_values(
         self, without_formating: bool = False
     ) -> pd.DataFrame:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         df_output = pd.DataFrame(
             df.isnull().sum() / len(df), columns=["percentage_missing_values"]
         )
@@ -246,7 +246,7 @@ class eda_class:
     def identify_top_n_most_frequent_value_across_non_numeric_columns(
         self, n: int = 5
     ) -> pd.DataFrame:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         df_output = pd.DataFrame()
         for col in df.select_dtypes(exclude=[np.number]).columns:
             df_output[col] = self.top_n_most_frequent_values_in_column(
@@ -266,7 +266,7 @@ class eda_class:
         return filter_non_capitalized_words_from_list(_list=all_attributes)
 
     def identify_boolean_like_columns(self) -> list:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         boolean_like_columns = []
         for col in df.columns:
             # Drop NA values
@@ -279,7 +279,7 @@ class eda_class:
         return boolean_like_columns
 
     def identify_redundant_columns(self) -> dict:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         redundant_columns_na_count = {}
         for col in df.columns:
             # Drop NA values
@@ -301,7 +301,7 @@ class eda_class:
         return df
 
     def identify_categorical_like_columns(self) -> list:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         categorical_like_columns = []
         for col in df.columns:
             # Drop NA values
@@ -320,7 +320,7 @@ class eda_class:
         return df
 
     def get_correlation_of_non_numerical_columns(self) -> pd.DataFrame:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         df = df.select_dtypes(exclude=[np.number])
         df = df.apply(lambda col: pd.factorize(col)[0])
         df_corr = self.make_diagonals_na(_df=df.corr())
@@ -328,7 +328,7 @@ class eda_class:
         return df_corr
 
     def identify_datetime_like_columns(self) -> pd.DataFrame:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         df = df.apply(
             lambda col: pd.to_datetime(col, errors="ignore")
             if col.dtypes == object
@@ -346,7 +346,7 @@ class eda_class:
         return self.filter_non_capitalized_words_from_list(_list=all_attributes)
 
     def determine_candidates_for_float32_conversion(self) -> list:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         float32_cols = []
         for col in df.columns:
             if df[col].dtype == np.float64:
@@ -358,7 +358,7 @@ class eda_class:
         return float32_cols
 
     def find_unique_identifier_columns(self) -> pd.DataFrame:
-        df = self.RAW_INPUT.copy()
+        df = self.raw_input.copy()
         cols_uid = [
             "column_name",
             "unique_identifier_count",
