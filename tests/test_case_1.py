@@ -1,3 +1,6 @@
+import os
+
+print(os.curdir)
 from eda_and_clean.eda import eda_class
 from .fixtures.case_1.input import input_1_fixture
 from .fixtures.case_1.output import (
