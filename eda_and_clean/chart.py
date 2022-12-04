@@ -2,262 +2,40 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Formatting for Plotly
-
-COLORS = {
-    "darkgrey": "rgb(189,189,189)",
-    "midgrey": "#AFAFAF",
-    "lightgrey": "#e6e6e6",
-    "black": "#151514",
-    "lightblack": "#363632",
-    "gold": "#b6972f",
-    "white": "#fff",
-    "lightgreen": "#5CD198",
-    "darkgreen": "#548F72",
-    "darkblue": "#007283",
-    "red": "#C23939",
-}
-
-
-def get_standard_layout_dict(
-    chart_title: str = None,
-    xaxis_title: str = None,
-    yaxis_title: str = None,
-    yaxis2_title: str = None,
-) -> dict:
+# Formating
+def set_layout_and_display_1y(
+    figure_object,
+    x_col_name,
+    y_col_name,
+    title_str,
+    y_is_percentage,
+    showlegend,
+    show_y_axis,
+    size_width,
+    size_height,
+    y_axis_range,
+):
     """
-    Returns our standard layout for plotly. Inputs:
-    - Chart title
-    - X axis title
-    - Y axis title
-
-    If one or more of the above arguments is not given, the default behavior is to simply not
-    show that title.
+    Sets the layout and displays the chart
     """
 
-    layout_dict = {
-        "autosize": True,
-        "title": {
-            "text": chart_title,
-            "xref": "container",
-            "yref": "container",
-            "y": 1,
-            "x": 0.5,
-            "pad": {"t": 30, "b": 20},
-            "font": {
-                "size": 15,
-                "family": "Eina, sans-serif",
-                "color": COLORS["white"],
-            },
-        },
-        "xaxis": {
-            "title": xaxis_title,
-            "ticks": "outside",
-            "ticklen": 10,
-            "showticklabels": True,
-            "showline": False,
-            "zeroline": False,
-            "gridcolor": COLORS["lightblack"],
-            "automargin": True,
-        },
-        "yaxis": {
-            "title": yaxis_title,
-            "ticks": "outside",
-            "ticklen": 10,
-            "showticklabels": True,
-            "showline": False,
-            "zeroline": False,
-            "gridcolor": COLORS["lightblack"],
-            "automargin": True,
-        },
-        "font": {"size": 12, "family": "Eina, sans-serif", "color": COLORS["midgrey"]},
-        "legend": {"x": 1.07},
-        "paper_bgcolor": COLORS["black"],
-        "plot_bgcolor": COLORS["black"],
-    }
-
-    if yaxis2_title:
-        layout_dict.update(
-            {
-                "yaxis2": {
-                    "title": yaxis2_title,
-                    "ticks": "outside",
-                    "ticklen": 10,
-                    "showticklabels": True,
-                    "showline": False,
-                    "zeroline": False,
-                    "gridcolor": COLORS["lightblack"],
-                    "anchor": "free",
-                    "overlaying": "y",
-                    "side": "right",
-                    "position": 1.0,
-                    "automargin": True,
-                }
-            }
-        )
-    return layout_dict
-
-
-def get_standard_layout(
-    chart_title: str = None,
-    xaxis_title: str = None,
-    yaxis_title: str = None,
-    yaxis2_title: str = None,
-) -> go.Layout:
-
-    """
-    Returns our standard layout for plotly. Inputs:
-    - Chart title
-    - X axis title
-    - Y axis title
-
-    If one or more of the above arguments is not given, the default behavior is to simply not
-    show that title.
-    """
-
-    return go.Layout(
-        get_standard_layout_dict(chart_title, xaxis_title, yaxis_title, yaxis2_title)
+    # Set the layout
+    figure_object.update_layout(
+        title=title_str,
+        xaxis_title=x_col_name,
+        yaxis_title=y_col_name,
+        showlegend=showlegend,
+        yaxis={"visible": show_y_axis},
+        width=size_width,
+        height=size_height,
+        yaxis_range=y_axis_range,
     )
 
-
-layout = get_standard_layout(chart_title="")
-layout_yaxis2 = get_standard_layout(chart_title="", yaxis2_title="NA")
-
-
-def set_layout_and_display(
-    figure_object,
-    x_col_name: str,
-    y_col_name: str,
-    title_str: str,
-    y_is_percentage: bool,
-    showlegend: bool,
-    show_y_axis: bool,
-    size_width: int,
-    size_height: int,
-    layout=layout,
-    y_axis_range=None,
-):
-
-    # Set layout
-    figure_object.layout = layout
-
-    # Set y as percentage if required
+    # Set the y axis to be percentage
     if y_is_percentage:
-        figure_object.layout.yaxis.tickformat = ",.0%"
-
-    # Set legend position and size
-    figure_object = set_legends_and_size_plotly(
-        fig=figure_object, size_width=size_width, size_height=size_height
-    )
-
-    # Set x and y axis names
-    figure_object.update_xaxes(title_text=x_col_name)
-    figure_object.update_yaxes(title_text=y_col_name)
-
-    # Add figure title
-    figure_object.update_layout(title_text=title_str)
-
-    # Show legend
-    figure_object.update_layout(showlegend=showlegend)
-
-    # Show y-axis
-    figure_object.update_yaxes(visible=show_y_axis)
-
-    # Set y-axis range
-    if y_axis_range is not None:
-        figure_object.update_layout(yaxis_range=y_axis_range)
+        figure_object.update_yaxes(tickformat="%")
 
     return figure_object
-
-
-def set_layout_and_display_2y(
-    figure_object,
-    x_col_name: str,
-    y1_col_name: str,
-    y2_col_name: str,
-    title_str: str,
-    y1_is_percentage: bool,
-    y2_is_percentage: bool,
-    x_is_int: bool,
-    x_is_date: bool,
-    are_negative_numbers_possible: bool = False,
-    max_abs_value_main_y: float = None,
-    max_abs_value_secondary_y: float = None,
-    y_bound_multiple: float = 1.1,
-    layout=layout_yaxis2,
-):
-
-    # Set layout
-    figure_object.layout = layout
-
-    # Set y as percentage if required
-    if y1_is_percentage:
-        figure_object.layout.yaxis.tickformat = ",.0%"
-    if y2_is_percentage:
-        figure_object.layout.yaxis2.tickformat = ",.0%"
-
-    # Set proper format for x axis
-    if x_is_int:
-        figure_object.layout.xaxis.tickformat = ",d"
-    elif x_is_date:
-        figure_object.update_layout(xaxis=dict(tickformat="%m-%Y"))
-
-    # Set legend position and size
-    figure_object = set_legends_and_size_plotly(fig=figure_object)
-
-    # Set x and y axis names
-    figure_object.update_xaxes(title_text=x_col_name)
-    figure_object.update_yaxes(title_text=y1_col_name, secondary_y=False)
-    figure_object.update_yaxes(title_text=y2_col_name, secondary_y=True)
-
-    # Add figure title
-    figure_object.update_layout(title_text=title_str)
-
-    # Align 0 - This will work as long as there are no negative values
-    figure_object.update_yaxes(rangemode="tozero")
-    figure_object.update_xaxes(rangemode="tozero")
-
-    # Update y axis range if required
-    if are_negative_numbers_possible:
-
-        if max_abs_value_secondary_y is None:
-            raise ValueError("Pls provide abs max value for secondary y axis")
-        if max_abs_value_main_y is None:
-            raise ValueError("Pls provide abs max value for primary y axis")
-
-        figure_object.update_yaxes(
-            scaleanchor="y1",
-            scaleratio=1,
-            constraintoward="bottom",
-            secondary_y=False,
-            range=[
-                max_abs_value_main_y * -y_bound_multiple,
-                max_abs_value_main_y * y_bound_multiple,
-            ],
-        )
-
-        figure_object.update_yaxes(
-            scaleanchor="y2",
-            scaleratio=1,
-            constraintoward="bottom",
-            secondary_y=True,
-            range=[
-                max_abs_value_secondary_y * -y_bound_multiple,
-                max_abs_value_secondary_y * y_bound_multiple,
-            ],
-        )
-
-    # https://community.plotly.com/t/plotly-express-with-xaxis-having-integers-strings/34777/2
-    figure_object.update_layout(xaxis_type="category")
-
-    return figure_object
-
-
-def set_legends_and_size_plotly(fig, size_width: int, size_height: int):
-    """ """
-    fig.update_layout(legend=dict(orientation="h", y=-0.3, x=0))
-    fig.update_layout(autosize=False, width=size_width, height=size_height)
-    return fig
 
 
 ## MAIN FUNCTIONS ##
@@ -299,7 +77,7 @@ def standard_chart_formatting_1y(func):
         # Size height
         size_height = kwargs["size_height"] if "size_height" in kwargs else 500
 
-        fig = set_layout_and_display(
+        fig = set_layout_and_display_1y(
             figure_object=fig,
             x_col_name=x_title_text,
             y_col_name=y_title_text,
@@ -307,7 +85,6 @@ def standard_chart_formatting_1y(func):
             y_is_percentage=y_is_percentage,
             showlegend=showlegend,
             show_y_axis=show_y_axis,
-            layout=layout,
             size_width=size_width,
             size_height=size_height,
             y_axis_range=None,
