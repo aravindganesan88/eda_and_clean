@@ -6,6 +6,7 @@ from nltk.stem.snowball import EnglishStemmer
 import warnings
 from math import isclose
 from .utils import filter_non_capitalized_words_from_list
+from .const import std_vals
 
 stemmer = EnglishStemmer()
 
@@ -13,23 +14,9 @@ stemmer = EnglishStemmer()
 class clean_class:
     def __init__(
         self,
-        _df: pd.DataFrame,
-        str_cols_to_clean: list,
-        cols_to_drop: list,
-        dict_with_cols_to_downcast: dict,
-        unique_id_col_that_is_str_which_needs_to_be_inted: str = None,
-        cols_that_should_not_have_negative: list = None,
-        cols_that_should_not_have_zero: list = None,
-        row_mask_to_drop: pd.Series = None,
-        dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict = None,
     ) -> None:
-        df = _df.copy()
-        # Reset index just in case there are duplicate index
-        # df = df.reset_index(drop=True)
 
-        # Save the raw input
-        self.str_cols_to_clean = str_cols_to_clean
-        self.cols_to_drop = cols_to_drop
+        # Initialize tracker
         self.cols_in_tracker = [
             "order",
             "activity",
@@ -38,22 +25,11 @@ class clean_class:
             "rows_impacted",
             "num_of_rows_impacted",
         ]
-        self.na_like_values = [
-            "na",
-            "n/a",
-            "nan",
-            "none",
-            "null",
-            "missing",
-            "unknown",
-            "undefined",
-            "",
-        ]
+        self.na_like_values = std_vals.na_like_items_in_str
         self.counter = 1
-
-        # Working and ouput
-        self.RAW_INPUT = df.copy()
         self.TRACKER = pd.DataFrame(columns=self.cols_in_tracker)
+
+        """
         df = self.drop_columns(_df=df)
         for downcast_to, list_of_cols in dict_with_cols_to_downcast.items():
             df = self.convert_one_dtype_at_a_time(
@@ -67,7 +43,6 @@ class clean_class:
             )
             self.NEW_ID_TO_OLD_ID_MAPPING = df_mapping.copy()
         df = self.make_datetime_like_columns_datetime(_df=df)
-        df = self.make_na_like_values_in_string_cols_na(_df=df)
         df = self.clean_str_columns(_df=df, str_cols_to_clean=str_cols_to_clean)
         df = self.drop_duplicate_rows(_df=df)
 
@@ -97,10 +72,30 @@ class clean_class:
                 df = self.make_masked_entries_na(
                     _df=df, row_mask_to_make_na=value, col=key
                 )
+        """
 
+    def remove_existing_index_and_make_new_one(self, _df: pd.DataFrame) -> pd.DataFrame:
+        df = _df.copy()
+        df = df.reset_index(drop=True)
+
+        # Track changes
+        self.track_changes(
+            activity="remove_existing_index_and_make_new_one",
+            cols_impacted=[],
+            num_of_cols_impacted=0,
+            rows_impacted=[],
+            num_of_rows_impacted=0,
+        )
+
+        # Save output
         self.OUTPUT = df.copy()
 
-    def make_mask_na(self, _df: pd.DataFrame, row_mask_to_make_na: pd.Series, col: str):
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
+
+    def make_one_col_mask_na(
+        self, _df: pd.DataFrame, row_mask_to_make_na: pd.Series, col: str
+    ):
         df = _df.copy()
         df.loc[row_mask_to_make_na, col] = np.nan
         self.track_changes(
@@ -110,6 +105,12 @@ class clean_class:
             rows_impacted=row_mask_to_make_na.index.tolist(),
             num_of_rows_impacted=len(row_mask_to_make_na.index.tolist()),
         )
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def drop_rows(self, _df: pd.DataFrame, row_mask_to_drop: pd.Series) -> pd.DataFrame:
         df = _df.copy()
@@ -121,7 +122,12 @@ class clean_class:
             rows_impacted=row_mask_to_drop.index.tolist(),
             num_of_rows_impacted=len(row_mask_to_drop.index.tolist()),
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def make_negative_na(
         self, _df: pd.DataFrame, cols_that_should_not_have_negative: list
@@ -139,6 +145,12 @@ class clean_class:
                     num_of_rows_impacted=len(df.loc[filter].index.tolist()),
                 )
 
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
+
     def make_zero_na(
         self, _df: pd.DataFrame, cols_that_should_not_have_zero: list
     ) -> pd.DataFrame:
@@ -154,14 +166,54 @@ class clean_class:
                     rows_impacted=df.loc[filter].index.tolist(),
                     num_of_rows_impacted=len(df.loc[filter].index.tolist()),
                 )
-        return df
 
-    def _make_str_columns_lowercase(self, _df: pd.DataFrame) -> pd.DataFrame:
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
+
+    def _make_str_cols_lowercase(self, _df: pd.DataFrame, cols: list) -> pd.DataFrame:
         df = _df.copy()
-        df = df.apply(
-            lambda col: col.str.lower() if col.dtypes == object else col, axis=0
+
+        # Remove duplicates if any
+        cols = list(set(cols))
+
+        # Check if list of cols are in df
+        cols_in_df = df.columns.tolist()
+        cols_in_input_cols_not_in_df = list(set(cols) - set(cols_in_df))
+        if len(cols_in_input_cols_not_in_df) > 0:
+            warnings.warn(f"Some columns in {cols} are not in the dataframe")
+
+        # Make sure cols are string
+        str_cols_in_df = df.select_dtypes(exclude=np.number).columns.tolist()
+        common_str_cols = list(set(cols).intersection(set(str_cols_in_df)))
+        non_str_cols_in_input_cols = list(set(cols).difference(set(str_cols_in_df)))
+        if len(non_str_cols_in_input_cols) > 0:
+            warnings.warn(f"{non_str_cols_in_input_cols} are not string columns")
+
+        # Make str_cols lowercase
+        print(f"Making {common_str_cols} lowercase")
+        for col in common_str_cols:
+            try:
+                df[col] = df[col].str.lower()
+            except AttributeError:
+                warnings.warn(f"Could not make {col} lowercase")
+
+        # Track changes
+        self.track_changes(
+            activity="make_str_col_lowercase",
+            cols_impacted=common_str_cols,
+            num_of_cols_impacted=len(common_str_cols),
+            rows_impacted=[],
+            num_of_rows_impacted=0,
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def track_changes(
         self,
@@ -197,29 +249,12 @@ class clean_class:
             rows_impacted=[],
             num_of_rows_impacted=0,
         )
-        return df
 
-    def make_na_like_values_in_string_cols_na(self, _df: pd.DataFrame) -> pd.DataFrame:
-        df = _df.copy()
-        string_cols = _df.select_dtypes(include=["object"]).columns.tolist()
-        df = self._make_str_columns_lowercase(_df=df)
-        df_original = df.copy()
+        # Save output
+        self.OUTPUT = df.copy()
 
-        cols_impacted = []
-        for col in string_cols:
-            df[col] = df[col].replace(self.na_like_values, np.nan)
-            # Find out if any replacement happened
-            cols_impacted.append(col) if df[col].equals(
-                df_original[col]
-            ) == False else None
-        self.track_changes(
-            activity="make_na_like_values_in_string_cols_na",
-            cols_impacted=cols_impacted,
-            num_of_cols_impacted=len(cols_impacted),
-            rows_impacted=[],
-            num_of_rows_impacted=0,
-        )
-        return df
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def make_datetime_like_columns_datetime(self, _df: pd.DataFrame) -> pd.DataFrame:
         df = _df.copy()
@@ -243,7 +278,12 @@ class clean_class:
             rows_impacted=[],
             num_of_rows_impacted=0,
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def clean_str_columns(
         self, _df: pd.DataFrame, str_cols_to_clean: list
@@ -290,7 +330,12 @@ class clean_class:
             rows_impacted=[],
             num_of_rows_impacted=0,
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def drop_duplicate_rows(self, _df: pd.DataFrame) -> pd.DataFrame:
         df = _df.copy()
@@ -304,7 +349,12 @@ class clean_class:
             rows_impacted=list(set(df_original.index) - set(df.index)),
             num_of_rows_impacted=num_of_rows_dropped,
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def get_attributes_of_class(self) -> list:
         return [
@@ -319,7 +369,7 @@ class clean_class:
 
     def convert_one_dtype_at_a_time(
         self, _df: pd.DataFrame, cols_to_downcast: list, down_cast_dtype: str
-    ):
+    ) -> pd.DataFrame:
         df = _df.copy()
 
         # Lets also ensure that the columns are numeric
@@ -348,14 +398,19 @@ class clean_class:
             rows_impacted=[],
             num_of_rows_impacted=0,
         )
-        return df
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
 
     def convert_str_to_uid_int(
         self,
         _df_input: pd.DataFrame,
         col_to_convert_to_int: str,
         int_type: str = "int32",
-    ) -> tuple:
+    ) -> pd.DataFrame:
         """
         This function is used to map unique values in a column to integer with objective of saving memory
 
@@ -367,7 +422,7 @@ class clean_class:
 
         Returns
         ---------------------------------------
-        (pd.DataFrame, pd.DataFrame)
+        pd.DataFrame: Output dataframe with the str uid repalced with integer uid column
         """
         df_input = _df_input.copy()
 
@@ -401,4 +456,9 @@ class clean_class:
             int_type
         )
 
-        return df_input, df_mapping
+        # Save output
+        self.OUTPUT = df_input.copy()
+        self.UID_MAPPING_DF = df_mapping.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
