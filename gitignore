@@ -10,7 +10,7 @@ __pycache__/
 test.ipynb
 
 # Requirement file created by pip freeze
-requirement_pip.txt
+requirements_pip.txt
 
 # Distribution / packaging
 .Python
