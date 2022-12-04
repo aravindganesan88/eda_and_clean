@@ -6,5 +6,4 @@ setuptools==65.5.0
 Nbformat==4.2.0
 scikit-learn==1.0.2
 pytest==7.2.0
-ipykernel==6.15.2
 seaborn==0.12.1
