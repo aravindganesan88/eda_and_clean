@@ -384,7 +384,7 @@ class eda_class:
         df = self.raw_input.copy()
         df = df.select_dtypes(exclude=[np.number])
         df = df.apply(lambda col: pd.factorize(col)[0])
-        df_corr = _df = df.corr()
+        df_corr = df.corr()
         return df_corr
 
     def identify_datetime_columns(self) -> pd.DataFrame:
