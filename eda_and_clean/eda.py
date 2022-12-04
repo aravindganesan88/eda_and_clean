@@ -33,8 +33,7 @@ class eda_class:
         self.DTYPES["potential_uid_columns"] = self.find_unique_identifier_columns()
 
         # Interim calculations
-        self.correlation_matrix_numerical = self.make_upper_triangle_na(
-            _df=self.make_diagonals_na(_df=self.raw_input.corr())
+        self.correlation_matrix_numerical = self.raw_input.corr()
         )
         self.correlation_matrix_non_numerical = (
             self.get_correlation_of_non_numerical_columns()
@@ -358,12 +357,6 @@ class eda_class:
             .index.to_list()
         )
 
-    def make_upper_triangle_na(self, _df: pd.DataFrame) -> pd.DataFrame:
-        df = _df.copy()
-        mask = np.triu(np.ones_like(df, dtype=bool))
-        df = df.mask(mask)
-        return df
-
     def identify_categorical_like_columns(self) -> list:
         df = self.raw_input.copy()
         categorical_like_columns = []
@@ -393,7 +386,6 @@ class eda_class:
         df = df.select_dtypes(exclude=[np.number])
         df = df.apply(lambda col: pd.factorize(col)[0])
         df_corr = self.make_diagonals_na(_df=df.corr())
-        df_corr = self.make_upper_triangle_na(_df=df_corr)
         return df_corr
 
     def identify_datetime_columns(self) -> pd.DataFrame:
