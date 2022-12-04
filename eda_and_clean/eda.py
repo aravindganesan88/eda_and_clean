@@ -6,12 +6,16 @@ from klib import cat_plot
 from operator import attrgetter
 from .utils import filter_non_capitalized_words_from_list, structure_concated_dataframe
 import warnings
+from .clean import clean_class
+from .const import std_vals
 
 
 class eda_class:
     def __init__(self, _df: pd.DataFrame, categorical_data: list = None) -> None:
         df = _df.copy()
+        self.na_like_items_in_str = std_vals.na_like_items_in_str
 
+        # Output dictionaries
         self.raw_input = df.copy()
         self.DTYPES = {}
         self.DOWNCASTING = {}
@@ -66,6 +70,9 @@ class eda_class:
             _df=self.generate_correlation_of_missing_values(),
             title="Correlation of Missing Values",
         )
+        self.MISSING_VALUES[
+            "na_like_values_in_str_columns"
+        ] = self.get_mask_for_na_like_items_in_str_columns()
 
         # Duplicates
         self.DUPLICATES["redundant_columns"] = self.identify_redundant_columns()
@@ -103,6 +110,45 @@ class eda_class:
         self.DATA_ANALYSIS[
             "top_10_most_frequent_values"
         ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
+
+    def get_mask_for_na_like_items_in_str_columns(self) -> pd.DataFrame:
+        # Select the requisite columns
+        df = self.raw_input.copy()
+        df = df.select_dtypes(exclude=np.number)
+        df = self._make_str_columns_lowercase(_df=df, cols=df.columns.to_list())
+        mask = df.isin(self.na_like_items_in_str)
+
+        return self.get_values_of_columns_based_on_mask(mask=mask)
+
+    def _make_str_columns_lowercase(
+        self, _df: pd.DataFrame, cols: list
+    ) -> pd.DataFrame:
+        df = _df.copy()
+        # Mixin function
+        clean_class_instance = clean_class()
+        return clean_class_instance._make_str_cols_lowercase(_df=df, cols=cols)
+
+    def get_values_of_columns_based_on_mask(self, mask: pd.DataFrame) -> pd.DataFrame:
+        # Select the requisite columns
+        df = self.raw_input
+        cols_in_mask = mask.columns.to_list()
+        df = df[cols_in_mask]
+
+        # Drop rows where all values are False
+        df = df[cols_in_mask]
+        df = df[mask].dropna(how="all")
+
+        # In the remaining lets record the unique values in a dict
+        dict_mask_values_in_df = {}
+        for col in df.columns:
+            dict_mask_values_in_df[col] = df[col].dropna().unique().tolist()
+
+        # Drop empty values from the dict
+        for key, value in dict_mask_values_in_df.copy().items():
+            if value == []:
+                dict_mask_values_in_df.pop(key, None)
+
+        return dict_mask_values_in_df
 
     def identify_if_dates_are_continuous(self) -> bool:
         _df = self.raw_input.copy()

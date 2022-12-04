@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def input_fixture():
+def input_1_fixture():
     historical_df = [
         (1, "12-31-2019", "A", "this is A", 5, 1, 1),
         (1, "12-31-2019", "A", "this is A", 5, 1, 1),
