@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="eda-and-clean",
-    version="0.0.1",
+    version="0.0.2",
     author="Aravind Ganesan",
     author_email="1988.aravind@gmail.com",
     description="A package of automation tools for EDA and cleaning",
@@ -15,9 +15,10 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=[""],
+    install_requires=["Nbformat"],
     python_requires=">=3.7",
 )
