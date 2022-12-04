@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
-from eda_and_beyond.eda_tools import histograms_numeric_columns
 from .chart import plotly_heatmap, line_plotly
-from klib import cat_plot
 from operator import attrgetter
 from .utils import filter_non_capitalized_words_from_list, structure_concated_dataframe
 import warnings
 from .clean import clean_class
 from .const import std_vals
+import seaborn as sns
 
 
 class eda_class:
@@ -87,8 +86,7 @@ class eda_class:
             _df=self.correlation_matrix_non_numerical,
             title="Correlation Matrix Non Numerical",
         )
-        self.DATA_ANALYSIS["histogram_matplotlib"] = histograms_numeric_columns(
-            df=self.raw_input,
+        self.DATA_ANALYSIS["histogram_matplotlib"] = self.histograms_numeric_columns(
             numerical_columns=self.raw_input.select_dtypes(include="number"),
         ).figure
 
@@ -97,19 +95,24 @@ class eda_class:
             self.categorical_data = self.DTYPES["categorical_like_columns"]
         else:
             self.categorical_data = categorical_data
-        try:
-            self.DATA_ANALYSIS["categorical_plot"] = cat_plot(
-                self.raw_input[self.categorical_data]
-            ).figure
-        except:
-            warnings.warn("Categorical plot failed")
-            pass
         self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
             _df=self.raw_input
         )
         self.DATA_ANALYSIS[
             "top_10_most_frequent_values"
         ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
+
+    # Reference: eda_and_beyond
+    def histograms_numeric_columns(self, numerical_columns: list):
+        """
+        Args: dataframe, numerical columns (list)
+        Returns group histagrams
+        """
+        df = self.raw_input.copy()
+        f = pd.melt(df, value_vars=numerical_columns)
+        g = sns.FacetGrid(f, col="variable", col_wrap=4, sharex=False, sharey=False)
+        g = g.map(sns.distplot, "value")
+        return g
 
     def get_mask_for_na_like_items_in_str_columns(self) -> pd.DataFrame:
         # Select the requisite columns

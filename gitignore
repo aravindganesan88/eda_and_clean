@@ -9,6 +9,9 @@ __pycache__/
 # Jupyter notebook file for demoing
 test.ipynb
 
+# Requirement file created by pip freeze
+requirements_pip.txt
+
 # Distribution / packaging
 .Python
 build/
