@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="eda-and-clean",
-    version="0.0.2",
+    version="0.0.3",
     author="Aravind Ganesan",
     author_email="1988.aravind@gmail.com",
     description="A package of automation tools for EDA and cleaning",
