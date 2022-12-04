@@ -1,7 +1,7 @@
 --
 ## Project Description
 
-The project provides a collection of automation tools for commonly used EDA and cleaning techniques. Instead of reinventing the wheel, the project also attempts to bring in other similar open source automation tools. For example, the library imports from klib and eda_and_beyond.
+The project provides a collection of automation tools for commonly used EDA and cleaning techniques. 
 
 The package consists of three modules, 
 
