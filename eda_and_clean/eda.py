@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from eda_and_beyond.eda_tools import histograms_numeric_columns
 from .chart import plotly_heatmap, line_plotly
-from klib import cat_plot
 from operator import attrgetter
 from .utils import filter_non_capitalized_words_from_list, structure_concated_dataframe
 import warnings
@@ -97,13 +96,6 @@ class eda_class:
             self.categorical_data = self.DTYPES["categorical_like_columns"]
         else:
             self.categorical_data = categorical_data
-        try:
-            self.DATA_ANALYSIS["categorical_plot"] = cat_plot(
-                self.raw_input[self.categorical_data]
-            ).figure
-        except:
-            warnings.warn("Categorical plot failed")
-            pass
         self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
             _df=self.raw_input
         )
