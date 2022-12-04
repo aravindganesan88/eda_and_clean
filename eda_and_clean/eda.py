@@ -34,7 +34,6 @@ class eda_class:
 
         # Interim calculations
         self.correlation_matrix_numerical = self.raw_input.corr()
-        )
         self.correlation_matrix_non_numerical = (
             self.get_correlation_of_non_numerical_columns()
         )
@@ -385,7 +384,7 @@ class eda_class:
         df = self.raw_input.copy()
         df = df.select_dtypes(exclude=[np.number])
         df = df.apply(lambda col: pd.factorize(col)[0])
-        df_corr = self.make_diagonals_na(_df=df.corr())
+        df_corr = _df = df.corr()
         return df_corr
 
     def identify_datetime_columns(self) -> pd.DataFrame:
