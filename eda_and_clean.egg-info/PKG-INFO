@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: eda-and-clean
-Version: 0.0.1
+Version: 0.0.2
 Summary: A package of automation tools for EDA and cleaning
 Home-page: https://github.com/aravindganesan88/eda_and_clean
 Author: Aravind Ganesan
@@ -8,6 +8,7 @@ Author-email: 1988.aravind@gmail.com
 License: UNKNOWN
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
+Classifier: Development Status :: 3 - Alpha
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.7
@@ -17,7 +18,7 @@ License-File: LICENCE.txt
 --
 ## Project Description
 
-The project provides a collection of automation tools for commonly used EDA and cleaning techniques. Instead of reinventing the wheel, the project also attempts to bring in other similar open source automation tools. For example, the library imports from klib and eda_and_beyond.
+The project provides a collection of automation tools for commonly used EDA and cleaning techniques. 
 
 The package consists of three modules, 
 
@@ -28,4 +29,5 @@ The package consists of three modules,
 3. chart - Contains functions for plotting purposes with embedded formatting.
 
 This is an open-source project. Contributors are welcome. :) 
+
 
