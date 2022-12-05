@@ -27,12 +27,10 @@ class clean_class:
             "tokenize_remove_stop_words_and_stem",
             "remove_punctuation",
             "remove_non_alphabets",
-            "remove_words_less_than_length_3",
+            "remove_words_less_than_length_3", list_of_stopwords_to_remove: list = []
         ]] [output: pd.DataFrame]
-        7. make_negative_na [input: _df: pd.DataFrame, cols_that_should_not_have_negative: list] [output: pd.DataFrame]
-        8. make_zero_na [input: _df: pd.DataFrame, cols_that_should_not_have_zero: list] [output: pd.DataFrame]
-        9. make_masked_entries_na [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
-        10. drop_rows [input: _df: pd.DataFrame, row_mask_to_drop: pd.Series] [output: pd.DataFrame]
+        7. make_masked_entries_na [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
+        8. drop_rows [input: _df: pd.DataFrame, row_mask_to_drop: pd.Series] [output: pd.DataFrame]
         """
 
         # Initialize tracker
@@ -119,52 +117,6 @@ class clean_class:
         # return df so that we can use pandas pipe
         return self.OUTPUT
 
-    def make_negative_na(
-        self, _df: pd.DataFrame, cols_that_should_not_have_negative: list
-    ) -> pd.DataFrame:
-        df = _df.copy()
-        for col in cols_that_should_not_have_negative:
-            filter = df[col] < 0
-            df.loc[filter, col] = np.nan
-
-            # Track changes - even if there is none
-            self.track_changes(
-                activity="make_negative_na",
-                cols_impacted=[col],
-                num_of_cols_impacted=1,
-                rows_impacted=df.loc[filter].index.tolist(),
-                num_of_rows_impacted=len(df.loc[filter].index.tolist()),
-            )
-
-        # Save output
-        self.OUTPUT = df.copy()
-
-        # return df so that we can use pandas pipe
-        return self.OUTPUT
-
-    def make_zero_na(
-        self, _df: pd.DataFrame, cols_that_should_not_have_zero: list
-    ) -> pd.DataFrame:
-        df = _df.copy()
-        for col in cols_that_should_not_have_zero:
-            filter = df[col] == 0
-            df.loc[filter, col] = np.nan
-
-            # Track changes - even if there is none
-            self.track_changes(
-                activity="make_zero_na",
-                cols_impacted=[col],
-                num_of_cols_impacted=1,
-                rows_impacted=df.loc[filter].index.tolist(),
-                num_of_rows_impacted=len(df.loc[filter].index.tolist()),
-            )
-
-        # Save output
-        self.OUTPUT = df.copy()
-
-        # return df so that we can use pandas pipe
-        return self.OUTPUT
-
     def _make_str_cols_lowercase(self, _df: pd.DataFrame, cols: list) -> pd.DataFrame:
         # Operations performed here will not be recorded. Please use clean_str_columns instead
 
@@ -244,11 +196,13 @@ class clean_class:
         _df: pd.DataFrame,
         str_cols_to_clean: list,
         operations_to_perform: list = [
+            "make_str_col_lowercase",
             "tokenize_remove_stop_words_and_stem",
             "remove_punctuation",
             "remove_non_alphabets",
             "remove_words_less_than_length_3",
         ],
+        list_of_stopwords_to_remove=[],
     ) -> pd.DataFrame:
 
         df = _df.copy()
@@ -276,6 +230,8 @@ class clean_class:
                 df[col] = df[col].apply(word_tokenize)
                 # Remove stop words
                 stop = stopwords.words("ENGLISH")
+                stop = list(set(stop) - set(list_of_stopwords_to_remove))
+
                 df[col] = df[col].apply(
                     lambda x: [item for item in x if item not in stop]
                 )
@@ -370,26 +326,30 @@ class clean_class:
 
         # Recording original df
         df_original = df.copy()
+        original_numeric_dtypes = df_original.select_dtypes(
+            include=np.number
+        ).columns.to_list()
+
+        # Get the columns in cols_to_convert that are in df
+        cols_to_convert = list(set(cols_to_convert) & set(df.columns))
 
         record_of_cols_impacted = []
         # Downcast the columns
         for col in cols_to_convert:
-            try:
-                df[col] = df[col].astype(target_dtype)
+            df[col] = df[col].astype(target_dtype)
 
-                if np.issubdtype(df[col].dtype, np.number):
-                    # Calculate mean of the columns in the original df and the downcasted df
-                    original_mean = df_original[col].mean()
-                    new_mean = df[col].mean()
-                    assert isclose(
-                        original_mean, new_mean, abs_tol=1e-3
-                    ), f"Converting to {target_dtype} has resulted in loss of information for column {col}"
-                record_of_cols_impacted.append(col)
-            except:
-                warnings.warn(
-                    f"Unable to convert column {col} to {target_dtype}. Skipping this column"
-                )
-                continue
+            if col in original_numeric_dtypes:
+                # Calculate mean of the columns in the original df and the downcasted df
+                original_mean = df_original[col].mean()
+                new_mean = df[col].mean()
+
+                if isclose(original_mean, new_mean, rel_tol=0.000001) == False:
+                    print(
+                        f"Converting to {target_dtype} has resulted in loss of information for column {col} therefore reverting back to original dtype"
+                    )
+                    df[col] = df_original[col]
+                else:
+                    record_of_cols_impacted.append(col)
 
         # Track changes
         self.track_changes(
