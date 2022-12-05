@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def output_1_dtypes_fixture():
     # Dtypes
     dtypes_test_1 = {}
@@ -36,26 +37,26 @@ def output_1_missing_values_fixture():
     missing_values_test_1["percentage_of_missing_values"] = pd.DataFrame(
         {
             "percentage_missing_values": {
-                0: "0.00%",
-                1: "0.00%",
-                2: "0.00%",
-                3: "0.00%",
-                4: "5.88%",
-                5: "11.76%",
-                6: "11.76%",
+                "volume": 0.11764705882352941,
+                "random": 0.11764705882352941,
+                "value": 0.058823529411764705,
+                "uid": 0.0,
+                "date": 0.0,
+                "id": 0.0,
+                "desc": 0.0,
             }
         }
     )
     missing_values_test_1["percentage_of_non_missing_values"] = pd.DataFrame(
         {
             "percentage_non_missing_values": {
-                0: 1.0,
-                1: 1.0,
-                2: 1.0,
-                3: 1.0,
-                4: 0.9411764705882353,
-                5: 0.8823529411764706,
-                6: 0.8823529411764706,
+                "volume": 0.8823529411764706,
+                "random": 0.8823529411764706,
+                "value": 0.9411764705882353,
+                "uid": 1.0,
+                "date": 1.0,
+                "id": 1.0,
+                "desc": 1.0,
             }
         }
     )

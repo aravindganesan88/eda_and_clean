@@ -11,6 +11,7 @@ def set_layout_and_display_1y(
     y_is_percentage,
     showlegend,
     show_y_axis,
+    show_x_axis,
     size_width,
     size_height,
     y_axis_range,
@@ -26,6 +27,7 @@ def set_layout_and_display_1y(
         yaxis_title=y_col_name,
         showlegend=showlegend,
         yaxis={"visible": show_y_axis},
+        xaxis={"visible": show_x_axis},
         width=size_width,
         height=size_height,
         yaxis_range=y_axis_range,
@@ -72,6 +74,8 @@ def standard_chart_formatting_1y(func):
         showlegend = kwargs["showlegend"] if "showlegend" in kwargs else True
         # show_y_axis
         show_y_axis = kwargs["show_y_axis"] if "show_y_axis" in kwargs else True
+        # show_x_axis
+        show_x_axis = kwargs["show_x_axis"] if "show_x_axis" in kwargs else True
         # size_width
         size_width = kwargs["size_width"] if "size_width" in kwargs else 1000
         # Size height
@@ -85,6 +89,7 @@ def standard_chart_formatting_1y(func):
             y_is_percentage=y_is_percentage,
             showlegend=showlegend,
             show_y_axis=show_y_axis,
+            show_x_axis=show_x_axis,
             size_width=size_width,
             size_height=size_height,
             y_axis_range=None,
@@ -130,7 +135,6 @@ def line_plotly(
 def plotly_heatmap(
     _df: pd.DataFrame,
     annotation: bool = True,
-    show_y_axis: bool = True,
     **kwargs,
 ) -> None:
     df = _df.copy()

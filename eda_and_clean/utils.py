@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def generate_outlier_mask_based_on_iqr(df, col_name, iqr_multiplier=1.5):
@@ -49,6 +50,7 @@ def print_dataframe_as_dataframe_definition(df: pd.DataFrame) -> None:
     df_text = df_text.replace("nan", "np.nan")
     return df_text
 
+
 def structure_concated_dataframe(_df: pd.DataFrame) -> pd.DataFrame:
     """
     Structures a dataframe that has been concated.
@@ -57,7 +59,14 @@ def structure_concated_dataframe(_df: pd.DataFrame) -> pd.DataFrame:
     """
     df = _df.copy()
     df = df.reset_index(drop=True)
-    for col in ['level_0', 'index']:
+    for col in ["level_0", "index"]:
         if col in df.columns:
             df = df.drop(columns=col)
+    return df
+
+
+def make_diagonals_na(_df: pd.DataFrame) -> pd.DataFrame:
+    df = _df.copy()
+    # fluctuating diagonals
+    df.values[[np.arange(df.shape[0])] * 2] = np.nan
     return df
