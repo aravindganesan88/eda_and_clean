@@ -8,6 +8,7 @@ def assert_dict(actual: dict, expected: dict, not_tested_keys: list = []):
             if isinstance(value, list):
                 assert expected[key] == value
             elif isinstance(value, pd.DataFrame):
+                value = value.reindex(expected[key].index)
                 assert (expected[key] == value).all().all()
             elif isinstance(value, dict):
                 assert value == expected[key]

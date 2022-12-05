@@ -15,6 +15,25 @@ class clean_class:
     def __init__(
         self,
     ) -> None:
+        """
+        Options:
+        1. remove_existing_index_and_make_new_one [input: _df: pd.DataFrame] [output: pd.DataFrame]
+        2. drop_duplicate_rows [input: _df: pd.DataFrame] [output: pd.DataFrame]
+        3. drop_columns [input: _df: pd.DataFrame, cols_to_drop: list] [output: pd.DataFrame]
+        4. convert_dtype [input: _df: pd.DataFrame, dict_with_cols_to_convert: dict (key: dtype, value: list of columns)] [output: pd.DataFrame]
+        5. convert_str_to_uid_int, NOT RECOMMENDED [input: _df_input: pd.DataFrame, col_to_convert_to_int: str,int_type: str] [output: pd.DataFrame]
+        6. clean_str_columns [input: _df: pd.DataFrame, str_cols_to_clean: list, operations_to_perform: list = [
+            "make_str_col_lowercase",
+            "tokenize_remove_stop_words_and_stem",
+            "remove_punctuation",
+            "remove_non_alphabets",
+            "remove_words_less_than_length_3",
+        ]] [output: pd.DataFrame]
+        7. make_negative_na [input: _df: pd.DataFrame, cols_that_should_not_have_negative: list] [output: pd.DataFrame]
+        8. make_zero_na [input: _df: pd.DataFrame, cols_that_should_not_have_zero: list] [output: pd.DataFrame]
+        9. make_masked_entries_na [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
+        10. drop_rows [input: _df: pd.DataFrame, row_mask_to_drop: pd.Series] [output: pd.DataFrame]
+        """
 
         # Initialize tracker
         self.cols_in_tracker = [
@@ -29,51 +48,6 @@ class clean_class:
         self.counter = 1
         self.TRACKER = pd.DataFrame(columns=self.cols_in_tracker)
 
-        """
-        df = self.drop_columns(_df=df)
-        for downcast_to, list_of_cols in dict_with_cols_to_downcast.items():
-            df = self.convert_one_dtype_at_a_time(
-                _df=df, cols_to_downcast=list_of_cols, down_cast_dtype=downcast_to
-            )
-        if unique_id_col_that_is_str_which_needs_to_be_inted != None:
-            df, df_mapping = self.convert_str_to_uid_int(
-                _df_input=df,
-                col_to_convert_to_int=unique_id_col_that_is_str_which_needs_to_be_inted,
-                int_type="int32",
-            )
-            self.NEW_ID_TO_OLD_ID_MAPPING = df_mapping.copy()
-        df = self.make_datetime_like_columns_datetime(_df=df)
-        df = self.clean_str_columns(_df=df, str_cols_to_clean=str_cols_to_clean)
-        df = self.drop_duplicate_rows(_df=df)
-
-        # Make negative values in columns that should not have negative values NA
-        if cols_that_should_not_have_negative != None:
-            df = self.make_negative_na(
-                _df=df,
-                cols_that_should_not_have_negative=cols_that_should_not_have_negative,
-            )
-
-        # Make zero in certain columns na
-        if cols_that_should_not_have_zero != None:
-            df = self.make_zero_na(
-                _df=df, cols_that_should_not_have_zero=cols_that_should_not_have_zero
-            )
-
-        # Drop certain rows
-        if row_mask_to_drop != None:
-            df = self.drop_rows(_df=df, row_mask_to_drop=row_mask_to_drop)
-
-        # Make certain entries as NA
-        if dict_with_col_name_as_key_and_mask_as_value_to_make_na != None:
-            for (
-                key,
-                value,
-            ) in dict_with_col_name_as_key_and_mask_as_value_to_make_na.items():
-                df = self.make_masked_entries_na(
-                    _df=df, row_mask_to_make_na=value, col=key
-                )
-        """
-
     def remove_existing_index_and_make_new_one(self, _df: pd.DataFrame) -> pd.DataFrame:
         df = _df.copy()
         df = df.reset_index(drop=True)
@@ -84,8 +58,28 @@ class clean_class:
             cols_impacted=[],
             num_of_cols_impacted=0,
             rows_impacted=[],
-            num_of_rows_impacted=0,
+            num_of_rows_impacted=np.nan,
         )
+
+        # Save output
+        self.OUTPUT = df.copy()
+
+        # return df so that we can use pandas pipe
+        return self.OUTPUT
+
+    def make_masked_entries_na(
+        self,
+        _df: pd.DataFrame,
+        dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict,
+    ) -> pd.DataFrame:
+        df = _df.copy()
+        for (
+            key,
+            value,
+        ) in dict_with_col_name_as_key_and_mask_as_value_to_make_na.items():
+            df = self.make_one_col_mask_na(_df=df, row_mask_to_make_na=value, col=key)
+
+        # Note: Tracking is done in the underlying function
 
         # Save output
         self.OUTPUT = df.copy()
@@ -102,15 +96,11 @@ class clean_class:
             activity="make_mask_na",
             cols_impacted=[col],
             num_of_cols_impacted=1,
-            rows_impacted=row_mask_to_make_na.index.tolist(),
-            num_of_rows_impacted=len(row_mask_to_make_na.index.tolist()),
+            rows_impacted=(df[row_mask_to_make_na]).index.tolist(),
+            num_of_rows_impacted=len((df[row_mask_to_make_na]).index.tolist()),
         )
 
-        # Save output
-        self.OUTPUT = df.copy()
-
-        # return df so that we can use pandas pipe
-        return self.OUTPUT
+        return df
 
     def drop_rows(self, _df: pd.DataFrame, row_mask_to_drop: pd.Series) -> pd.DataFrame:
         df = _df.copy()
@@ -119,8 +109,8 @@ class clean_class:
             activity="drop_rows",
             cols_impacted=[],
             num_of_cols_impacted=0,
-            rows_impacted=row_mask_to_drop.index.tolist(),
-            num_of_rows_impacted=len(row_mask_to_drop.index.tolist()),
+            rows_impacted=(df[row_mask_to_drop]).index.tolist(),
+            num_of_rows_impacted=len((df[row_mask_to_drop]).index.tolist()),
         )
 
         # Save output
@@ -136,14 +126,15 @@ class clean_class:
         for col in cols_that_should_not_have_negative:
             filter = df[col] < 0
             df.loc[filter, col] = np.nan
-            if filter.sum() > 0:
-                self.track_changes(
-                    activity="make_negative_na",
-                    cols_impacted=[col],
-                    num_of_cols_impacted=1,
-                    rows_impacted=df.loc[filter].index.tolist(),
-                    num_of_rows_impacted=len(df.loc[filter].index.tolist()),
-                )
+
+            # Track changes - even if there is none
+            self.track_changes(
+                activity="make_negative_na",
+                cols_impacted=[col],
+                num_of_cols_impacted=1,
+                rows_impacted=df.loc[filter].index.tolist(),
+                num_of_rows_impacted=len(df.loc[filter].index.tolist()),
+            )
 
         # Save output
         self.OUTPUT = df.copy()
@@ -158,14 +149,15 @@ class clean_class:
         for col in cols_that_should_not_have_zero:
             filter = df[col] == 0
             df.loc[filter, col] = np.nan
-            if filter.sum() > 0:
-                self.track_changes(
-                    activity="make_zero_na",
-                    cols_impacted=[col],
-                    num_of_cols_impacted=1,
-                    rows_impacted=df.loc[filter].index.tolist(),
-                    num_of_rows_impacted=len(df.loc[filter].index.tolist()),
-                )
+
+            # Track changes - even if there is none
+            self.track_changes(
+                activity="make_zero_na",
+                cols_impacted=[col],
+                num_of_cols_impacted=1,
+                rows_impacted=df.loc[filter].index.tolist(),
+                num_of_rows_impacted=len(df.loc[filter].index.tolist()),
+            )
 
         # Save output
         self.OUTPUT = df.copy()
@@ -174,6 +166,8 @@ class clean_class:
         return self.OUTPUT
 
     def _make_str_cols_lowercase(self, _df: pd.DataFrame, cols: list) -> pd.DataFrame:
+        # Operations performed here will not be recorded. Please use clean_str_columns instead
+
         df = _df.copy()
 
         # Remove duplicates if any
@@ -193,27 +187,14 @@ class clean_class:
             warnings.warn(f"{non_str_cols_in_input_cols} are not string columns")
 
         # Make str_cols lowercase
-        print(f"Making {common_str_cols} lowercase")
         for col in common_str_cols:
             try:
                 df[col] = df[col].str.lower()
             except AttributeError:
                 warnings.warn(f"Could not make {col} lowercase")
 
-        # Track changes
-        self.track_changes(
-            activity="make_str_col_lowercase",
-            cols_impacted=common_str_cols,
-            num_of_cols_impacted=len(common_str_cols),
-            rows_impacted=[],
-            num_of_rows_impacted=0,
-        )
-
-        # Save output
-        self.OUTPUT = df.copy()
-
         # return df so that we can use pandas pipe
-        return self.OUTPUT
+        return df
 
     def track_changes(
         self,
@@ -239,44 +220,17 @@ class clean_class:
         self.TRACKER = pd.concat([self.TRACKER, temp])
         self.counter += 1
 
-    def drop_columns(self, _df: pd.DataFrame) -> pd.DataFrame:
+    def drop_columns(self, _df: pd.DataFrame, cols_to_drop: list) -> pd.DataFrame:
         df = _df.copy()
-        df = df.drop(columns=self.cols_to_drop)
+        df = df.drop(columns=cols_to_drop)
+
+        # Track changes
         self.track_changes(
             activity="drop_columns",
-            cols_impacted=self.cols_to_drop,
-            num_of_cols_impacted=len(self.cols_to_drop),
+            cols_impacted=cols_to_drop,
+            num_of_cols_impacted=len(cols_to_drop),
             rows_impacted=[],
-            num_of_rows_impacted=0,
-        )
-
-        # Save output
-        self.OUTPUT = df.copy()
-
-        # return df so that we can use pandas pipe
-        return self.OUTPUT
-
-    def make_datetime_like_columns_datetime(self, _df: pd.DataFrame) -> pd.DataFrame:
-        df = _df.copy()
-
-        # Make datetime like columns datetime and track which columns were impacted
-        datetime_cols_pre = df.select_dtypes(include=["datetime"]).columns.tolist()
-        df = df.apply(
-            lambda col: pd.to_datetime(col, errors="ignore")
-            if col.dtypes == object
-            else col,
-            axis=0,
-        )
-        datetime_cols_post = df.select_dtypes(include=["datetime"]).columns.tolist()
-        datetime_cols_impacted = list(set(datetime_cols_post) - set(datetime_cols_pre))
-
-        # Initiate tracker
-        self.track_changes(
-            activity="make_datetime_like_columns_datetime",
-            cols_impacted=datetime_cols_impacted,
-            num_of_cols_impacted=len(datetime_cols_impacted),
-            rows_impacted=[],
-            num_of_rows_impacted=0,
+            num_of_rows_impacted=np.nan,
         )
 
         # Save output
@@ -286,8 +240,17 @@ class clean_class:
         return self.OUTPUT
 
     def clean_str_columns(
-        self, _df: pd.DataFrame, str_cols_to_clean: list
+        self,
+        _df: pd.DataFrame,
+        str_cols_to_clean: list,
+        operations_to_perform: list = [
+            "tokenize_remove_stop_words_and_stem",
+            "remove_punctuation",
+            "remove_non_alphabets",
+            "remove_words_less_than_length_3",
+        ],
     ) -> pd.DataFrame:
+
         df = _df.copy()
         df_original = df.copy()
         columns_impacted = []
@@ -295,28 +258,43 @@ class clean_class:
         # Identify string columns
         string_cols = _df.select_dtypes(include=["object"]).columns.tolist()
         string_cols = list(set(string_cols).intersection(set(str_cols_to_clean)))
+        if len(str_cols_to_clean) > len(string_cols):
+            warnings.warn(
+                f"Some columns in {str_cols_to_clean} are not string columns. Only {string_cols} will be cleaned"
+            )
 
         # Loop through evert string column and clean textual data
         for col in string_cols:
             # Make na values as empty string
             df[col] = df[col].fillna("")
-            # Tokenize
-            df[col] = df[col].apply(word_tokenize)
-            # Remove stop words
-            stop = stopwords.words("ENGLISH")
-            df[col] = df[col].apply(lambda x: [item for item in x if item not in stop])
-            # Stem every word
-            df[col] = df[col].apply(lambda x: [stemmer.stem(y) for y in x])
-            # Make column of list to str
-            df[col] = df[col].apply(lambda x: " ".join(map(str, x)))
-            # Remove punctuations
-            df[col] = df[col].str.replace("[^\w\s]", "")
-            # Remove everything other than alphabets
-            df[col] = df[col].str.replace("[^a-zA-Z]", " ")
-            # Make empty string as na
-            df[col] = df[col].replace("", np.nan)
-            # Remove words with length less than 3
-            df[col] = df[col].str.findall("\w{3,}").str.join(" ")
+
+            if "make_str_col_lowercase" in operations_to_perform:
+                df = self._make_str_cols_lowercase(_df=df, cols=[col])
+
+            if "tokenize_remove_stop_words_and_stem" in operations_to_perform:
+                # Tokenize
+                df[col] = df[col].apply(word_tokenize)
+                # Remove stop words
+                stop = stopwords.words("ENGLISH")
+                df[col] = df[col].apply(
+                    lambda x: [item for item in x if item not in stop]
+                )
+                # Stem every word
+                df[col] = df[col].apply(lambda x: [stemmer.stem(y) for y in x])
+                # Make column of list to str
+                df[col] = df[col].apply(lambda x: " ".join(map(str, x)))
+
+            if "remove_punctuation" in operations_to_perform:
+                # Remove punctuations
+                df[col] = df[col].str.replace("[^\w\s]", "")
+
+            if "remove_non_alphabets" in operations_to_perform:
+                # Remove everything other than alphabets
+                df[col] = df[col].str.replace("[^a-zA-Z]", " ")
+
+            if "remove_words_less_than_length_3" in operations_to_perform:
+                # Remove words with length less than 3
+                df[col] = df[col].str.findall("\w{3,}").str.join(" ")
             # Determine if the column was impacted
             columns_impacted.append(col) if df[col].equals(
                 df_original[col]
@@ -328,7 +306,7 @@ class clean_class:
             cols_impacted=columns_impacted,
             num_of_cols_impacted=len(columns_impacted),
             rows_impacted=[],
-            num_of_rows_impacted=0,
+            num_of_rows_impacted=np.nan,
         )
 
         # Save output
@@ -367,37 +345,17 @@ class clean_class:
         all_attributes = self.get_attributes_of_class()
         return filter_non_capitalized_words_from_list(_list=all_attributes)
 
-    def convert_one_dtype_at_a_time(
-        self, _df: pd.DataFrame, cols_to_downcast: list, down_cast_dtype: str
+    def convert_dtype(
+        self, _df: pd.DataFrame, dict_with_cols_to_convert: dict
     ) -> pd.DataFrame:
         df = _df.copy()
 
-        # Lets also ensure that the columns are numeric
-        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-        cols_to_downcast = list(set(cols_to_downcast).intersection(set(numeric_cols)))
-
-        # Recording original df
-        df_original = df.copy()
-
-        # Downcast the columns
-        for col in cols_to_downcast:
-            df[col] = df[col].astype(down_cast_dtype)
-
-            # Calculate mean of the columns in the original df and the downcasted df
-            original_mean = df_original[col].mean()
-            new_mean = df[col].mean()
-            assert isclose(
-                original_mean, new_mean, abs_tol=1e-3
-            ), f"Downcasting to {down_cast_dtype} has resulted in loss of information for column {col}"
-
-        # Track changes
-        self.track_changes(
-            activity=f"converting_to_{down_cast_dtype}",
-            cols_impacted=cols_to_downcast,
-            num_of_cols_impacted=len(cols_to_downcast),
-            rows_impacted=[],
-            num_of_rows_impacted=0,
-        )
+        # Loop through the dictionary and downcast the columns
+        for target_dtype, list_of_cols in dict_with_cols_to_convert.items():
+            df = self.convert_one_dtype_at_a_time(
+                _df=df, cols_to_convert=list_of_cols, target_dtype=target_dtype
+            )
+        # Note: Tracking has been done in the underlying function
 
         # Save output
         self.OUTPUT = df.copy()
@@ -405,9 +363,48 @@ class clean_class:
         # return df so that we can use pandas pipe
         return self.OUTPUT
 
+    def convert_one_dtype_at_a_time(
+        self, _df: pd.DataFrame, cols_to_convert: list, target_dtype: str
+    ) -> pd.DataFrame:
+        df = _df.copy()
+
+        # Recording original df
+        df_original = df.copy()
+
+        record_of_cols_impacted = []
+        # Downcast the columns
+        for col in cols_to_convert:
+            try:
+                df[col] = df[col].astype(target_dtype)
+
+                if np.issubdtype(df[col].dtype, np.number):
+                    # Calculate mean of the columns in the original df and the downcasted df
+                    original_mean = df_original[col].mean()
+                    new_mean = df[col].mean()
+                    assert isclose(
+                        original_mean, new_mean, abs_tol=1e-3
+                    ), f"Converting to {target_dtype} has resulted in loss of information for column {col}"
+                record_of_cols_impacted.append(col)
+            except:
+                warnings.warn(
+                    f"Unable to convert column {col} to {target_dtype}. Skipping this column"
+                )
+                continue
+
+        # Track changes
+        self.track_changes(
+            activity=f"converting_to_{target_dtype}",
+            cols_impacted=record_of_cols_impacted,
+            num_of_cols_impacted=len(record_of_cols_impacted),
+            rows_impacted=[],
+            num_of_rows_impacted=np.nan,
+        )
+
+        return df
+
     def convert_str_to_uid_int(
         self,
-        _df_input: pd.DataFrame,
+        _df: pd.DataFrame,
         col_to_convert_to_int: str,
         int_type: str = "int32",
     ) -> pd.DataFrame:
@@ -416,7 +413,7 @@ class clean_class:
 
         Parameters
         ----------------------------------------
-        _df_input (pd.DataFrame): Input dataframe
+        _df (pd.DataFrame): Input dataframe
         col_to_convert_to_int (str): column name in _df_input that needs to coded up using random numbers
         int_type (str): Deafult: "int32" or altenatively use "int64"
 
@@ -424,7 +421,7 @@ class clean_class:
         ---------------------------------------
         pd.DataFrame: Output dataframe with the str uid repalced with integer uid column
         """
-        df_input = _df_input.copy()
+        df_input = _df.copy()
 
         # Input validation
         if not isinstance(df_input, pd.DataFrame):

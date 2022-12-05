@@ -10,7 +10,7 @@ import seaborn as sns
 
 
 class eda_class:
-    def __init__(self, _df: pd.DataFrame, categorical_data: list = None) -> None:
+    def __init__(self, _df: pd.DataFrame) -> None:
         df = _df.copy()
         self.na_like_items_in_str = std_vals.na_like_items_in_str
 
@@ -61,11 +61,16 @@ class eda_class:
             "dates_continuity_check"
         ] = self.identify_if_dates_are_continuous()
         self.MISSING_VALUES["plotly_missing_values_heatmap"] = plotly_heatmap(
-            _df=self.raw_input.isnull(), title="Missing Values Heatmap"
+            _df=self.raw_input.isnull(),
+            title="Missing Values Heatmap",
+            show_y_axis=False,
+            show_x_axis=True,
         )
         self.MISSING_VALUES["plotly_correlation_missing_values"] = plotly_heatmap(
             _df=self.generate_correlation_of_missing_values(),
             title="Correlation of Missing Values",
+            show_y_axis=True,
+            show_x_axis=False,
         )
         self.MISSING_VALUES[
             "na_like_values_in_str_columns"
@@ -79,20 +84,21 @@ class eda_class:
         self.DATA_ANALYSIS["plotly_correlation_numerical"] = plotly_heatmap(
             _df=self.correlation_matrix_numerical,
             title="Correlation Matrix Numerical",
+            show_y_axis=True,
+            show_x_axis=False,
         )
+
         self.DATA_ANALYSIS["plotly_correlation_non_numerical"] = plotly_heatmap(
             _df=self.correlation_matrix_non_numerical,
             title="Correlation Matrix Non Numerical",
+            show_y_axis=True,
+            show_x_axis=False,
         )
+
         self.DATA_ANALYSIS["histogram_matplotlib"] = self.histograms_numeric_columns(
             numerical_columns=self.raw_input.select_dtypes(include="number"),
         ).figure
 
-        # Categorical plot
-        if categorical_data is None:
-            self.categorical_data = self.DTYPES["categorical_like_columns"]
-        else:
-            self.categorical_data = categorical_data
         self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
             _df=self.raw_input
         )
@@ -260,29 +266,25 @@ class eda_class:
         df_null = df_null[df_null.any(axis=1)]
         return df_null.corr()
 
-    def generate_dataframe_with_percentage_of_missing_values(
-        self, without_formating: bool = False
-    ) -> pd.DataFrame:
+    def generate_dataframe_with_percentage_of_missing_values(self) -> pd.DataFrame:
         df = self.raw_input.copy()
-        df_output = pd.DataFrame(
-            df.isnull().sum() / len(df), columns=["percentage_missing_values"]
+        df_output = (
+            pd.DataFrame(df.isnull().sum() / len(df))
+            .rename(columns={0: "percentage_missing_values"})
+            .sort_values(by="percentage_missing_values", ascending=False)
         )
-        if without_formating:
-            return df_output
-        df_output = self.convert_float_to_percentage_in_dataframe(
-            _df=df_output, cols=["percentage_missing_values"]
-        )
-        return structure_concated_dataframe(df_output)
+
+        return df_output
 
     def generate_dataframe_with_percentage_of_non_missing_values(self) -> pd.DataFrame:
-        df_output = self.generate_dataframe_with_percentage_of_missing_values(
-            without_formating=True
-        )
+        df_output = self.generate_dataframe_with_percentage_of_missing_values()
         df_output = df_output.rename(
             columns={"percentage_missing_values": "percentage_non_missing_values"}
         )
-        df_output = 1 - df_output
-        return structure_concated_dataframe(df_output)
+        df_output["percentage_non_missing_values"] = (
+            1 - df_output["percentage_non_missing_values"]
+        )
+        return df_output
 
     def convert_float_to_percentage_in_dataframe(
         self, _df: pd.DataFrame, cols: list
@@ -374,12 +376,6 @@ class eda_class:
         )
         return categorical_like_columns
 
-    def make_diagonals_na(self, _df: pd.DataFrame) -> pd.DataFrame:
-        df = _df.copy()
-        # fluctuating diagonals
-        df.values[[np.arange(df.shape[0])] * 2] = np.nan
-        return df
-
     def get_correlation_of_non_numerical_columns(self) -> pd.DataFrame:
         df = self.raw_input.copy()
         df = df.select_dtypes(exclude=[np.number])
@@ -404,6 +400,18 @@ class eda_class:
     def get_output_attributes_of_class(self) -> list:
         all_attributes = self.get_attributes_of_class()
         return self.filter_non_capitalized_words_from_list(_list=all_attributes)
+
+    def get_methods_of_class(self) -> list:
+        return [
+            attr
+            for attr in dir(self)
+            if callable(getattr(self, attr)) and not attr.startswith("__")
+        ]
+
+    def get_additional_eda_functionality(self) -> list:
+        all_attributes = self.get_methods_of_class()
+        # Identify items ending with "_"
+        return [attr for attr in all_attributes if attr.endswith("_")]
 
     def determine_candidates_for_float32_conversion(self) -> list:
         df = self.raw_input.copy()
@@ -470,7 +478,7 @@ class eda_class:
 
         return df
 
-    def cdf_plotly(self, _df: pd.DataFrame, col: str):
+    def cdf_plotly_(self, _df: pd.DataFrame, col: str):
         df_ecdf = self.calculate_empirical_cdf(_df=_df, col=col)
 
         # generate_chart
@@ -484,7 +492,7 @@ class eda_class:
 
         return fig
 
-    def generate_describe_after_groupby(
+    def generate_describe_after_groupby_(
         self, _df: pd.DataFrame, groupby_col_name: list, describe_col_name: str
     ):
         """
