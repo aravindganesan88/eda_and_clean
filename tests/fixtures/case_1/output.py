@@ -30,81 +30,9 @@ def output_1_dtypes_fixture():
     return dtypes_test_1, not_tested_keys
 
 
-def output_1_missing_values_fixture():
-    missing_values_test_1 = {}
-    missing_values_test_1["columns_with_no_null_values"] = ["uid", "date", "id", "desc"]
-    missing_values_test_1["columns_with_null_values"] = ["value", "volume", "random"]
-    missing_values_test_1["percentage_of_missing_values"] = pd.DataFrame(
-        {
-            "percentage_missing_values": {
-                "volume": 0.11764705882352941,
-                "random": 0.11764705882352941,
-                "value": 0.058823529411764705,
-                "uid": 0.0,
-                "date": 0.0,
-                "id": 0.0,
-                "desc": 0.0,
-            }
-        }
-    )
-    missing_values_test_1["percentage_of_non_missing_values"] = pd.DataFrame(
-        {
-            "percentage_non_missing_values": {
-                "volume": 0.8823529411764706,
-                "random": 0.8823529411764706,
-                "value": 0.9411764705882353,
-                "uid": 1.0,
-                "date": 1.0,
-                "id": 1.0,
-                "desc": 1.0,
-            }
-        }
-    )
-    missing_values_test_1["dates_continuity_check"] = pd.DataFrame(
-        {
-            "col": {0: "date", 1: "date", 2: "date", 3: "date"},
-            "freq": {0: "D", 1: "M", 2: "Q", 3: "A"},
-            "max_value_of_diff_between_periods": {0: 92, 1: 3, 2: 1, 3: 1},
-        }
-    )
-    missing_values_test_1["na_like_values_in_str_columns"] = {
-        "id": ["na"],
-        "desc": [""],
-    }
-    missing_values_test_1["na_in_datetime_columns"] = {"date": []}
-    # Not tested keys
-    not_tested_keys = [
-        "plotly_missing_values_heatmap",
-        "plotly_correlation_missing_values",
-    ]
-
-    return missing_values_test_1, not_tested_keys
-
-
-def output_1_downcasting_fixture():
-    downcasting_test_1 = {}
-    downcasting_test_1["to_float32"] = ["value", "volume", "random"]
-
-    # Not tested keys
-    not_tested_keys = []
-
-    return downcasting_test_1, not_tested_keys
-
-
-def output_1_duplicates_fixture():
-    duplicate_test_1 = {}
-    duplicate_test_1["redundant_columns"] = {"random": 2}
-    duplicate_test_1["duplicate_rows"] = [0, 1]
-
-    # Not tested keys
-    not_tested_keys = []
-
-    return duplicate_test_1, not_tested_keys
-
-
-def output_1_data_analysis_fixture():
-    data_analysis_test_1 = {}
-    data_analysis_test_1["describe"] = pd.DataFrame(
+def output_1_summary_fixture():
+    summary_test_1 = {}
+    summary_test_1["describe"] = pd.DataFrame(
         {
             "uid": {
                 "sum": 137.0,
@@ -180,6 +108,59 @@ def output_1_data_analysis_fixture():
             },
         }
     )
+
+    # Not tested keys
+    not_tested_keys = ["info"]
+
+    return summary_test_1, not_tested_keys
+
+
+def output_1_missing_values_fixture():
+    missing_values_test_1 = {}
+    missing_values_test_1["dates_continuity_check"] = pd.DataFrame(
+        {
+            "col": {0: "date", 1: "date", 2: "date", 3: "date"},
+            "freq": {0: "D", 1: "M", 2: "Q", 3: "A"},
+            "max_value_of_diff_between_periods": {0: 92, 1: 3, 2: 1, 3: 1},
+        }
+    )
+    missing_values_test_1["na_like_values_in_str_columns"] = {
+        "id": ["na"],
+        "desc": [""],
+    }
+    missing_values_test_1["na_in_datetime_columns"] = {"date": []}
+    # Not tested keys
+    not_tested_keys = [
+        "plotly_missing_values_heatmap",
+        "plotly_correlation_missing_values",
+    ]
+
+    return missing_values_test_1, not_tested_keys
+
+
+def output_1_downcasting_fixture():
+    downcasting_test_1 = {}
+    downcasting_test_1["to_float32"] = ["value", "volume", "random"]
+
+    # Not tested keys
+    not_tested_keys = []
+
+    return downcasting_test_1, not_tested_keys
+
+
+def output_1_duplicates_fixture():
+    duplicate_test_1 = {}
+    duplicate_test_1["redundant_columns"] = {"random": 2}
+    duplicate_test_1["duplicate_rows"] = [0, 1]
+
+    # Not tested keys
+    not_tested_keys = []
+
+    return duplicate_test_1, not_tested_keys
+
+
+def output_1_data_analysis_fixture():
+    data_analysis_test_1 = {}
     data_analysis_test_1["top_10_most_frequent_values"] = pd.DataFrame(
         {
             "date": {

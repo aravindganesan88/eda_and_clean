@@ -16,6 +16,7 @@ class eda_class:
 
         # Output dictionaries
         self.raw_input = df.copy()
+        self.SUMMARY = {}
         self.DTYPES = {}
         self.DOWNCASTING = {}
         self.MISSING_VALUES = {}
@@ -23,6 +24,10 @@ class eda_class:
         self.DATA_ANALYSIS = {}
 
         # OUTPUT
+
+        # Summary
+        self.SUMMARY["info"] = self.generate_df_info()
+        self.SUMMARY["describe"] = self.generate_dataframe_describe(_df=self.raw_input)
 
         # Identifying dtypes
         self.DTYPES["boolean_like_columns"] = self.identify_boolean_like_columns()
@@ -45,18 +50,6 @@ class eda_class:
         ] = self.determine_candidates_for_float32_conversion()
 
         # Missing values
-        self.MISSING_VALUES[
-            "columns_with_no_null_values"
-        ] = self.generate_list_of_columns_with_no_null_values()
-        self.MISSING_VALUES[
-            "columns_with_null_values"
-        ] = self.generate_list_of_columns_with_null_values()
-        self.MISSING_VALUES[
-            "percentage_of_missing_values"
-        ] = self.generate_dataframe_with_percentage_of_missing_values()
-        self.MISSING_VALUES[
-            "percentage_of_non_missing_values"
-        ] = self.generate_dataframe_with_percentage_of_non_missing_values()
         self.MISSING_VALUES[
             "dates_continuity_check"
         ] = self.identify_if_dates_are_continuous()
@@ -102,12 +95,23 @@ class eda_class:
             numerical_columns=self.raw_input.select_dtypes(include="number"),
         ).figure
 
-        self.DATA_ANALYSIS["describe"] = self.generate_dataframe_describe(
-            _df=self.raw_input
-        )
         self.DATA_ANALYSIS[
             "top_10_most_frequent_values"
         ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
+
+    def generate_df_info(self) -> pd.DataFrame:
+        df = self.raw_input.copy()
+        df_info = pd.DataFrame(
+            {
+                "columns": df.columns,
+                "non_nulls": len(df) - df.isnull().sum().values,
+                "nulls": df.isnull().sum().values,
+                "type": df.dtypes.values,
+            }
+        )
+        df_info["non_nulls_%"] = (df_info["non_nulls"] / len(df)).round(2)
+        df_info["nulls_%"] = (df_info["nulls"] / len(df)).round(2)
+        return df_info
 
     # Reference: eda_and_beyond
     def histograms_numeric_columns(self, numerical_columns: list):
@@ -268,38 +272,10 @@ class eda_class:
 
         return df_describe
 
-    def generate_list_of_columns_with_null_values(self) -> list:
-        df = self.raw_input.copy()
-        return df.columns[df.isnull().any()].tolist()
-
-    def generate_list_of_columns_with_no_null_values(self) -> list:
-        df = self.raw_input.copy()
-        return df.columns[df.notnull().all()].tolist()
-
     def generate_correlation_of_missing_values(self) -> pd.DataFrame:
         df_null = self.raw_input.copy().isnull()
         df_null = df_null[df_null.any(axis=1)]
         return df_null.corr()
-
-    def generate_dataframe_with_percentage_of_missing_values(self) -> pd.DataFrame:
-        df = self.raw_input.copy()
-        df_output = (
-            pd.DataFrame(df.isnull().sum() / len(df))
-            .rename(columns={0: "percentage_missing_values"})
-            .sort_values(by="percentage_missing_values", ascending=False)
-        )
-
-        return df_output
-
-    def generate_dataframe_with_percentage_of_non_missing_values(self) -> pd.DataFrame:
-        df_output = self.generate_dataframe_with_percentage_of_missing_values()
-        df_output = df_output.rename(
-            columns={"percentage_missing_values": "percentage_non_missing_values"}
-        )
-        df_output["percentage_non_missing_values"] = (
-            1 - df_output["percentage_non_missing_values"]
-        )
-        return df_output
 
     def convert_float_to_percentage_in_dataframe(
         self, _df: pd.DataFrame, cols: list
