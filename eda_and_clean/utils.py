@@ -70,3 +70,19 @@ def make_diagonals_na(_df: pd.DataFrame) -> pd.DataFrame:
     # fluctuating diagonals
     df.values[[np.arange(df.shape[0])] * 2] = np.nan
     return df
+
+
+def check_df_equal(df_1: pd.DataFrame, df_2: pd.DataFrame) -> bool:
+
+    # Make sure both are of the same shape
+    if df_1.shape != df_2.shape:
+        print("There is a difference in the shape of the dataframes")
+        return False
+
+    col_order = df_1.columns.tolist()
+    df_2 = df_2[col_order]
+
+    index_order = df_1.index.tolist()
+    df_2 = df_2.reindex(index_order)
+
+    return df_1.equals(df_2)

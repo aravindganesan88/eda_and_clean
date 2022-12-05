@@ -8,11 +8,16 @@ def assert_dict(actual: dict, expected: dict, not_tested_keys: list = []):
             if isinstance(value, list):
                 assert expected[key] == value
             elif isinstance(value, pd.DataFrame):
-                value = value.reindex(expected[key].index)
-                assert (expected[key] == value).all().all()
+                assert_dataframe(actual=value, expected=expected[key])
             elif isinstance(value, dict):
                 assert value == expected[key]
             else:
                 warnings.warn(
                     "test coverage not implemented for this {} type".format(type(value))
                 )
+
+
+def assert_dataframe(actual: pd.DataFrame, expected: pd.DataFrame):
+    # actual = actual.reindex(expected.index)
+    # assert (expected == actual).all().all()
+    pd.testing.assert_frame_equal(actual, expected, check_dtype=False)
