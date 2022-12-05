@@ -71,7 +71,7 @@ def output_1_missing_values_fixture():
         "id": ["na"],
         "desc": [""],
     }
-
+    missing_values_test_1["na_in_datetime_columns"] = {"date": []}
     # Not tested keys
     not_tested_keys = [
         "plotly_missing_values_heatmap",

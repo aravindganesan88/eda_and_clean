@@ -75,6 +75,9 @@ class eda_class:
         self.MISSING_VALUES[
             "na_like_values_in_str_columns"
         ] = self.get_mask_for_na_like_items_in_str_columns()
+        self.MISSING_VALUES[
+            "na_in_datetime_columns"
+        ] = self.identify_na_in_datetime_column()
 
         # Duplicates
         self.DUPLICATES["redundant_columns"] = self.identify_redundant_columns()
@@ -117,6 +120,18 @@ class eda_class:
         g = sns.FacetGrid(f, col="variable", col_wrap=4, sharex=False, sharey=False)
         g = g.map(sns.distplot, "value")
         return g
+
+    def identify_na_in_datetime_column(self) -> dict:
+        df = self.raw_input.copy()
+        datetime_cols = self.DTYPES["datetime"]
+        df = df[datetime_cols]
+        na_in_datetime_cols_dict = {}
+        for col in datetime_cols:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+            mask = df[col].isna()
+            df_col = df[mask]
+            na_in_datetime_cols_dict[col] = df_col.index.to_list()
+        return na_in_datetime_cols_dict
 
     def get_mask_for_na_like_items_in_str_columns(self) -> pd.DataFrame:
         # Select the requisite columns
