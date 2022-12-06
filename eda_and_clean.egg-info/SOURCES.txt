@@ -13,9 +13,11 @@ eda_and_clean.egg-info/dependency_links.txt
 eda_and_clean.egg-info/requires.txt
 eda_and_clean.egg-info/top_level.txt
 tests/__init__.py
-tests/test_case_1.py
+tests/test_clean_case_1.py
+tests/test_eda_case_1.py
 tests/utils.py
 tests/fixtures/__init__.py
 tests/fixtures/case_1/__init__.py
 tests/fixtures/case_1/input.py
-tests/fixtures/case_1/output.py
+tests/fixtures/case_1/output_clean.py
+tests/fixtures/case_1/output_eda.py

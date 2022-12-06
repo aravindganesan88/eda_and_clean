@@ -1,14 +1,9 @@
 import pandas as pd
 import numpy as np
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem.snowball import EnglishStemmer
 import warnings
 from math import isclose
 from .utils import filter_non_capitalized_words_from_list
 from .const import std_vals
-
-stemmer = EnglishStemmer()
 
 
 class clean_class:
@@ -226,10 +221,15 @@ class clean_class:
                 df = self._make_str_cols_lowercase(_df=df, cols=[col])
 
             if "tokenize_remove_stop_words_and_stem" in operations_to_perform:
+                from nltk.corpus import stopwords
+                from nltk.tokenize import word_tokenize
+                from nltk.stem.snowball import EnglishStemmer
+
+                stemmer = EnglishStemmer()
                 # Tokenize
                 df[col] = df[col].apply(word_tokenize)
                 # Remove stop words
-                stop = stopwords.words("ENGLISH")
+                stop = stopwords.words("english")
                 stop = list(set(stop) - set(list_of_stopwords_to_remove))
 
                 df[col] = df[col].apply(
