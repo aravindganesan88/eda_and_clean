@@ -3,7 +3,6 @@ import numpy as np
 from .chart import plotly_heatmap, line_plotly
 from operator import attrgetter
 from .utils import filter_non_capitalized_words_from_list, structure_concated_dataframe
-import warnings
 from .clean import clean_class
 from .const import std_vals
 import seaborn as sns
