@@ -9,7 +9,17 @@ import seaborn as sns
 
 
 class eda_class:
-    def __init__(self, _df: pd.DataFrame) -> None:
+    def __init__(
+        self,
+        _df: pd.DataFrame,
+        modules_to_run=[
+            "summary",
+            "dtypes",
+            "missing_values",
+            "duplicates",
+            "data_analysis",
+        ],
+    ) -> None:
         df = _df.copy()
         self.na_like_items_in_str = std_vals.na_like_items_in_str
 
@@ -25,78 +35,87 @@ class eda_class:
         # OUTPUT
 
         # Summary
-        self.SUMMARY["info"] = self.generate_df_info()
-        self.SUMMARY["describe"] = self.generate_dataframe_describe(_df=self.raw_input)
+        if "summary" in modules_to_run:
+            self.SUMMARY["info"] = self.generate_df_info()
+            self.SUMMARY["describe"] = self.generate_dataframe_describe(
+                _df=self.raw_input
+            )
 
-        # Identifying dtypes
-        self.DTYPES["boolean_like_columns"] = self.identify_boolean_like_columns()
-        self.DTYPES["datetime"] = self.identify_datetime_columns()
-        self.DTYPES[
-            "categorical_like_columns"
-        ] = self.identify_categorical_like_columns()
-        self.DTYPES["potential_uid_columns"] = self.find_unique_identifier_columns()
+        if "dtypes" in modules_to_run:
+            # Identifying dtypes
+            self.DTYPES["boolean_like_columns"] = self.identify_boolean_like_columns()
+            self.DTYPES["datetime"] = self.identify_datetime_columns()
+            self.DTYPES[
+                "categorical_like_columns"
+            ] = self.identify_categorical_like_columns()
+            self.DTYPES["potential_uid_columns"] = self.find_unique_identifier_columns()
 
-        # Interim calculations
-        self.correlation_matrix_numerical = self.raw_input.corr()
-        self.correlation_matrix_non_numerical = (
-            self.get_correlation_of_non_numerical_columns()
-        )
+            # Interim calculations
+            self.correlation_matrix_numerical = self.raw_input.corr()
+            self.correlation_matrix_non_numerical = (
+                self.get_correlation_of_non_numerical_columns()
+            )
 
-        # Downcasting options
-        # Note: Int column cannot contain NaN values
-        self.DOWNCASTING[
-            "to_float32"
-        ] = self.determine_candidates_for_float32_conversion()
+            # Downcasting options
+            # Note: Int column cannot contain NaN values
+            self.DOWNCASTING[
+                "to_float32"
+            ] = self.determine_candidates_for_float32_conversion()
 
-        # Missing values
-        self.MISSING_VALUES[
-            "dates_continuity_check"
-        ] = self.identify_if_dates_are_continuous()
-        self.MISSING_VALUES["plotly_missing_values_heatmap"] = plotly_heatmap(
-            _df=self.raw_input.isnull(),
-            title="Missing Values Heatmap",
-            show_y_axis=False,
-            show_x_axis=True,
-        )
-        self.MISSING_VALUES["plotly_correlation_missing_values"] = plotly_heatmap(
-            _df=self.generate_correlation_of_missing_values(),
-            title="Correlation of Missing Values",
-            show_y_axis=True,
-            show_x_axis=False,
-        )
-        self.MISSING_VALUES[
-            "na_like_values_in_str_columns"
-        ] = self.get_mask_for_na_like_items_in_str_columns()
-        self.MISSING_VALUES[
-            "na_in_datetime_columns"
-        ] = self.identify_na_in_datetime_column()
+        if "missing_values" in modules_to_run:
+            # Missing values
+            self.MISSING_VALUES[
+                "dates_continuity_check"
+            ] = self.identify_if_dates_are_continuous()
+            self.MISSING_VALUES["plotly_missing_values_heatmap"] = plotly_heatmap(
+                _df=self.raw_input.isnull(),
+                title="Missing Values Heatmap",
+                show_y_axis=False,
+                show_x_axis=True,
+            )
+            self.MISSING_VALUES["plotly_correlation_missing_values"] = plotly_heatmap(
+                _df=self.generate_correlation_of_missing_values(),
+                title="Correlation of Missing Values",
+                show_y_axis=True,
+                show_x_axis=False,
+            )
+            self.MISSING_VALUES[
+                "na_like_values_in_str_columns"
+            ] = self.get_mask_for_na_like_items_in_str_columns()
+            self.MISSING_VALUES[
+                "na_in_datetime_columns"
+            ] = self.identify_na_in_datetime_column()
 
-        # Duplicates
-        self.DUPLICATES["redundant_columns"] = self.identify_redundant_columns()
-        self.DUPLICATES["duplicate_rows"] = self.identify_duplicate_rows()
+        if "duplicates" in modules_to_run:
+            # Duplicates
+            self.DUPLICATES["redundant_columns"] = self.identify_redundant_columns()
+            self.DUPLICATES["duplicate_rows"] = self.identify_duplicate_rows()
 
-        # Data analysis
-        self.DATA_ANALYSIS["plotly_correlation_numerical"] = plotly_heatmap(
-            _df=self.correlation_matrix_numerical,
-            title="Correlation Matrix Numerical",
-            show_y_axis=True,
-            show_x_axis=False,
-        )
+        if "data_analysis" in modules_to_run:
+            # Data analysis
+            self.DATA_ANALYSIS["plotly_correlation_numerical"] = plotly_heatmap(
+                _df=self.correlation_matrix_numerical,
+                title="Correlation Matrix Numerical",
+                show_y_axis=True,
+                show_x_axis=False,
+            )
 
-        self.DATA_ANALYSIS["plotly_correlation_non_numerical"] = plotly_heatmap(
-            _df=self.correlation_matrix_non_numerical,
-            title="Correlation Matrix Non Numerical",
-            show_y_axis=True,
-            show_x_axis=False,
-        )
+            self.DATA_ANALYSIS["plotly_correlation_non_numerical"] = plotly_heatmap(
+                _df=self.correlation_matrix_non_numerical,
+                title="Correlation Matrix Non Numerical",
+                show_y_axis=True,
+                show_x_axis=False,
+            )
 
-        self.DATA_ANALYSIS["histogram_matplotlib"] = self.histograms_numeric_columns(
-            numerical_columns=self.raw_input.select_dtypes(include="number"),
-        ).figure
+            self.DATA_ANALYSIS[
+                "histogram_matplotlib"
+            ] = self.histograms_numeric_columns(
+                numerical_columns=self.raw_input.select_dtypes(include="number"),
+            ).figure
 
-        self.DATA_ANALYSIS[
-            "top_10_most_frequent_values"
-        ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
+            self.DATA_ANALYSIS[
+                "top_10_most_frequent_values"
+            ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
 
     def generate_df_info(self) -> pd.DataFrame:
         df = self.raw_input.copy()
@@ -459,8 +478,20 @@ class eda_class:
 
     def calculate_empirical_cdf(self, _df: pd.DataFrame, col: str) -> pd.DataFrame:
         df = _df[[col]].copy()
+        
+        # Setting a row couter
         df["count"] = 1
+        
+        # Removing na
+        na_filter = df[col].isna()
+        if sum(na_filter)>0:
+            print(f'There are {sum(na_filter)} na entries in {col} which were removed while doing CDF analysis')
+        df = df[~na_filter]
+        
+        # Sort values
         df = df.sort_values(by=col, ascending=True)
+        
+        # Required calculation for cdf
         df["cum_count"] = df["count"].cumsum()
         df["cdf"] = df["cum_count"] / df["count"].sum()
         df["1-cdf"] = 1 - df["cdf"]

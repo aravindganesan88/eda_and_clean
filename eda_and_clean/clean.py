@@ -24,7 +24,7 @@ class clean_class:
             "remove_non_alphabets",
             "remove_words_less_than_length_3", list_of_stopwords_to_remove: list = []
         ]] [output: pd.DataFrame]
-        7. make_masked_entries_na [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
+        7. make_masked_entries [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
         8. drop_rows [input: _df: pd.DataFrame, row_mask_to_drop: pd.Series] [output: pd.DataFrame]
         """
 
@@ -60,17 +60,20 @@ class clean_class:
         # return df so that we can use pandas pipe
         return self.OUTPUT
 
-    def make_masked_entries_na(
+    def fill_value_in_masked_entries(
         self,
         _df: pd.DataFrame,
         dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict,
+        fill_value,
     ) -> pd.DataFrame:
         df = _df.copy()
         for (
             key,
             value,
         ) in dict_with_col_name_as_key_and_mask_as_value_to_make_na.items():
-            df = self.make_one_col_mask_na(_df=df, row_mask_to_make_na=value, col=key)
+            df = self.fill_value_in_one_col_mask(
+                _df=df, row_mask_to_make_na=value, col=key, fill_value=fill_value
+            )
 
         # Note: Tracking is done in the underlying function
 
@@ -80,11 +83,11 @@ class clean_class:
         # return df so that we can use pandas pipe
         return self.OUTPUT
 
-    def make_one_col_mask_na(
-        self, _df: pd.DataFrame, row_mask_to_make_na: pd.Series, col: str
+    def fill_value_in_one_col_mask(
+        self, _df: pd.DataFrame, row_mask_to_make_na: pd.Series, col: str, fill_value
     ):
         df = _df.copy()
-        df.loc[row_mask_to_make_na, col] = np.nan
+        df.loc[row_mask_to_make_na, col] = fill_value
         self.track_changes(
             activity="make_mask_na",
             cols_impacted=[col],

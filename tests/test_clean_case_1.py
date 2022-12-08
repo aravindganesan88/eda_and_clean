@@ -7,11 +7,12 @@ from .fixtures.case_1.output_clean import (
     output_1_drop_columns,
     output_1_drop_duplicate_rows,
     output_1_drop_rows,
-    output_1_make_masked_entries_na,
+    output_1_fill_value_in_masked_entries,
     output_1_remove_existing_index_and_make_new_one,
 )
 from .utils import assert_dataframe
 import pandas as pd
+import numpy as np
 
 df = input_1_fixture()
 eda_instance_test_1 = eda_class(_df=df)
@@ -38,12 +39,12 @@ df_test_5 = df_test_4.pipe(
     ],
     list_of_stopwords_to_remove=["a"],
 )
-df_test_6 = clean_instance_test_1.make_masked_entries_na(
+df_test_6 = clean_instance_test_1.fill_value_in_masked_entries(
     _df=df_test_5,
     dict_with_col_name_as_key_and_mask_as_value_to_make_na={
         "id": df_test_5["id"] == "na",
         "desc": df_test_5["desc"] == "",
-    },
+    },fill_value=np.nan
 )
 df_test_7 = clean_instance_test_1.drop_rows(
     _df=df_test_6, row_mask_to_drop=df_test_6["value"].isna()
@@ -78,9 +79,9 @@ def test_clean_str_columns():
     )
 
 
-def test_make_masked_entries_na():
+def test_fill_value_in_masked_entries():
     pd.testing.assert_frame_equal(
-        df_test_6, output_1_make_masked_entries_na(), check_dtype=False
+        df_test_6, output_1_fill_value_in_masked_entries(), check_dtype=False
     )
 
 
