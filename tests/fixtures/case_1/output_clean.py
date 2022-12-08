@@ -625,7 +625,7 @@ def output_1_clean_str_columns():
     return df
 
 
-def output_1_make_masked_entries_na():
+def output_1_fill_value_in_masked_entries():
     df = pd.DataFrame(
         {
             "uid": {

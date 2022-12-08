@@ -7,11 +7,18 @@ from .fixtures.case_1.output_eda import (
     output_1_duplicates_fixture,
     output_1_data_analysis_fixture,
     output_1_summary_fixture,
+    output_1_df_cdf,
 )
-from .utils import assert_dict
+from .utils import assert_dict, assert_dataframe
 
 df = input_1_fixture()
 eda_instance_1 = eda_class(_df=df)
+
+
+def test_cdf():
+    df_cdf_actual = eda_instance_1.calculate_empirical_cdf(_df=df, col="value")
+    df_cdf_expected = output_1_df_cdf()
+    assert_dataframe(actual=df_cdf_actual, expected=df_cdf_expected)
 
 
 def test_summary():
