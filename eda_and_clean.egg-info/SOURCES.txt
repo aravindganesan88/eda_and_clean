@@ -6,6 +6,7 @@ eda_and_clean/chart.py
 eda_and_clean/clean.py
 eda_and_clean/const.py
 eda_and_clean/eda.py
+eda_and_clean/impute.py
 eda_and_clean/utils.py
 eda_and_clean.egg-info/PKG-INFO
 eda_and_clean.egg-info/SOURCES.txt
@@ -15,6 +16,7 @@ eda_and_clean.egg-info/top_level.txt
 tests/__init__.py
 tests/test_clean_case_1.py
 tests/test_eda_case_1.py
+tests/test_impute_case_2.py
 tests/utils.py
 tests/fixtures/__init__.py
 tests/fixtures/case_1/__init__.py
