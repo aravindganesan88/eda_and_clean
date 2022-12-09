@@ -24,7 +24,7 @@ class clean_class:
             "remove_non_alphabets",
             "remove_words_less_than_length_3", list_of_stopwords_to_remove: list = []
         ]] [output: pd.DataFrame]
-        7. make_masked_entries [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
+        7. fill_value_in_masked_entries [input: _df: pd.DataFrame, dict_with_col_name_as_key_and_mask_as_value_to_make_na: dict] [output: pd.DataFrame]
         8. drop_rows [input: _df: pd.DataFrame, row_mask_to_drop: pd.Series] [output: pd.DataFrame]
         """
 
@@ -100,7 +100,7 @@ class clean_class:
 
     def drop_rows(self, _df: pd.DataFrame, row_mask_to_drop: pd.Series) -> pd.DataFrame:
         df = _df.copy()
-        df = df.loc[~row_mask_to_drop]
+        df_output = df.loc[~row_mask_to_drop]
         self.track_changes(
             activity="drop_rows",
             cols_impacted=[],
@@ -110,7 +110,7 @@ class clean_class:
         )
 
         # Save output
-        self.OUTPUT = df.copy()
+        self.OUTPUT = df_output.copy()
 
         # return df so that we can use pandas pipe
         return self.OUTPUT

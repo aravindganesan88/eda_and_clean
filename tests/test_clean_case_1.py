@@ -10,7 +10,6 @@ from .fixtures.case_1.output_clean import (
     output_1_fill_value_in_masked_entries,
     output_1_remove_existing_index_and_make_new_one,
 )
-from .utils import assert_dataframe
 import pandas as pd
 import numpy as np
 
@@ -44,7 +43,8 @@ df_test_6 = clean_instance_test_1.fill_value_in_masked_entries(
     dict_with_col_name_as_key_and_mask_as_value_to_make_na={
         "id": df_test_5["id"] == "na",
         "desc": df_test_5["desc"] == "",
-    },fill_value=np.nan
+    },
+    fill_value=np.nan,
 )
 df_test_7 = clean_instance_test_1.drop_rows(
     _df=df_test_6, row_mask_to_drop=df_test_6["value"].isna()
