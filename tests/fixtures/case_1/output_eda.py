@@ -151,7 +151,7 @@ def output_1_downcasting_fixture():
 def output_1_duplicates_fixture():
     duplicate_test_1 = {}
     duplicate_test_1["redundant_columns"] = {"random": 2}
-    duplicate_test_1["duplicate_rows"] = [0, 1]
+    duplicate_test_1["duplicate_rows"] = [1]
 
     # Not tested keys
     not_tested_keys = []

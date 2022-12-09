@@ -362,7 +362,7 @@ class eda_class:
     def identify_duplicate_rows(self) -> pd.DataFrame:
         df = self.raw_input.copy()
         return (
-            df[df.duplicated(keep=False)]
+            df[df.duplicated(keep="first")]
             .sort_values(by=df.columns.tolist())
             .index.to_list()
         )
@@ -478,19 +478,21 @@ class eda_class:
 
     def calculate_empirical_cdf(self, _df: pd.DataFrame, col: str) -> pd.DataFrame:
         df = _df[[col]].copy()
-        
+
         # Setting a row couter
         df["count"] = 1
-        
+
         # Removing na
         na_filter = df[col].isna()
-        if sum(na_filter)>0:
-            print(f'There are {sum(na_filter)} na entries in {col} which were removed while doing CDF analysis')
+        if sum(na_filter) > 0:
+            print(
+                f"There are {sum(na_filter)} na entries in {col} which were removed while doing CDF analysis"
+            )
         df = df[~na_filter]
-        
+
         # Sort values
         df = df.sort_values(by=col, ascending=True)
-        
+
         # Required calculation for cdf
         df["cum_count"] = df["count"].cumsum()
         df["cdf"] = df["cum_count"] / df["count"].sum()
