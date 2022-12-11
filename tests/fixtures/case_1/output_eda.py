@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def output_1_dtypes_fixture():
@@ -109,8 +110,37 @@ def output_1_summary_fixture():
         }
     )
 
+    summary_test_1["info"] = pd.DataFrame(
+        {
+            "columns": {
+                0: "uid",
+                1: "date",
+                2: "id",
+                3: "desc",
+                4: "value",
+                5: "volume",
+                6: "random",
+            },
+            "non_nulls": {0: 17, 1: 17, 2: 17, 3: 17, 4: 16, 5: 15, 6: 15},
+            "nulls": {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 2, 6: 2},
+            "type": {
+                0: np.dtype("int32"),
+                1: np.dtype("<M8[ns]"),
+                2: np.dtype("O"),
+                3: np.dtype("O"),
+                4: np.dtype("float64"),
+                5: np.dtype("float64"),
+                6: np.dtype("float64"),
+            },
+            "zeros": {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0},
+            "non_nulls_%": {0: 1.0, 1: 1.0, 2: 1.0, 3: 1.0, 4: 0.94, 5: 0.88, 6: 0.88},
+            "nulls_%": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.06, 5: 0.12, 6: 0.12},
+            "zero_%": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0},
+        }
+    )
+
     # Not tested keys
-    not_tested_keys = ["info"]
+    not_tested_keys = []
 
     return summary_test_1, not_tested_keys
 
@@ -119,9 +149,27 @@ def output_1_missing_values_fixture():
     missing_values_test_1 = {}
     missing_values_test_1["dates_continuity_check"] = pd.DataFrame(
         {
-            "col": {0: "date", 1: "date", 2: "date", 3: "date"},
-            "freq": {0: "D", 1: "M", 2: "Q", 3: "A"},
-            "max_value_of_diff_between_periods": {0: 92, 1: 3, 2: 1, 3: 1},
+            "col": {0: "date", 1: "date", 2: "date"},
+            "freq": {0: "M", 1: "Q", 2: "A"},
+            "max_value_of_diff_between_periods": {0: 3, 1: 1, 2: 1},
+            "missing_periods": {
+                0: pd.PeriodIndex(
+                    [
+                        "2020-01",
+                        "2020-02",
+                        "2020-04",
+                        "2020-05",
+                        "2020-07",
+                        "2020-08",
+                        "2020-10",
+                        "2020-11",
+                    ],
+                    dtype="period[M]",
+                ),
+                1: pd.PeriodIndex([], dtype="period[Q-DEC]"),
+                2: pd.PeriodIndex([], dtype="period[A-DEC]"),
+            },
+            "number_of_missing_periods": {0: 8, 1: 0, 2: 0},
         }
     )
     missing_values_test_1["na_like_values_in_str_columns"] = {
@@ -161,22 +209,17 @@ def output_1_duplicates_fixture():
 
 def output_1_data_analysis_fixture():
     data_analysis_test_1 = {}
-    data_analysis_test_1["top_10_most_frequent_values"] = pd.DataFrame(
+    data_analysis_test_1["top_20_most_frequent_values"] = pd.DataFrame(
         {
-            "date": {
-                0: pd.to_datetime("2020-03-31 00:00:00"),
-                1: pd.to_datetime("2020-09-30 00:00:00"),
-                2: pd.to_datetime("2020-12-31 00:00:00"),
-                3: pd.to_datetime("2020-06-30 00:00:00"),
-                4: pd.to_datetime("2019-12-31 00:00:00"),
-            },
-            "id": {0: "A", 1: "B", 2: "C", 3: "na", 4: "E"},
+            "id": {0: "A", 1: "B", 2: "C", 3: "na", 4: "E", 5: "F", 6: "G"},
             "desc": {
                 0: "this is A",
                 1: "this is B",
                 2: "this is C",
                 3: "",
                 4: "this is E",
+                5: "this is F",
+                6: "this is G",
             },
         }
     )

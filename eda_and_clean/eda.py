@@ -114,8 +114,8 @@ class eda_class:
             ).figure
 
             self.DATA_ANALYSIS[
-                "top_10_most_frequent_values"
-            ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=10)
+                "top_20_most_frequent_values"
+            ] = self.identify_top_n_most_frequent_value_across_non_numeric_columns(n=20)
 
     def generate_df_info(self) -> pd.DataFrame:
         df = self.raw_input.copy()
@@ -125,10 +125,12 @@ class eda_class:
                 "non_nulls": len(df) - df.isnull().sum().values,
                 "nulls": df.isnull().sum().values,
                 "type": df.dtypes.values,
+                "zeros": (df == 0).sum().values,
             }
         )
         df_info["non_nulls_%"] = (df_info["non_nulls"] / len(df)).round(2)
         df_info["nulls_%"] = (df_info["nulls"] / len(df)).round(2)
+        df_info["zero_%"] = (df_info["zeros"] / len(df)).round(2)
         return df_info
 
     # Reference: eda_and_beyond
@@ -197,14 +199,20 @@ class eda_class:
     def identify_if_dates_are_continuous(self) -> bool:
         _df = self.raw_input.copy()
         df_datetime_continuity = pd.DataFrame(
-            columns=["col", "freq", "max_value_of_diff_between_periods"]
+            columns=[
+                "col",
+                "freq",
+                "max_value_of_diff_between_periods",
+                "missing_periods",
+                "number_of_missing_periods",
+            ]
         )
 
         for date_col in self.DTYPES["datetime"]:
             df_temp = _df.copy()
             df_temp[date_col] = pd.to_datetime(df_temp[date_col])
 
-            for freq in ["D", "M", "Q", "A"]:
+            for freq in ["M", "Q", "A"]:
                 df = df_temp.copy()
                 df[date_col + "_period"] = df[date_col]
                 df = df.set_index(date_col + "_period")
@@ -216,10 +224,25 @@ class eda_class:
                     max_val = np.nan
                 max_val = df["period_diff"].iloc[1:].apply(attrgetter("n")).max()
 
+                # Find missing periods
+                idx = pd.period_range(
+                    min(df[date_col + "_period"]),
+                    max(df[date_col + "_period"]),
+                    freq=freq,
+                )
+                # Find missing periods
+                idx_new = idx.difference(df[date_col + "_period"])
+
                 # Record info
                 df_datetime_continuity_temp = pd.DataFrame(
-                    [[date_col, freq, max_val]],
-                    columns=["col", "freq", "max_value_of_diff_between_periods"],
+                    [[date_col, freq, max_val, idx_new, len(idx_new)]],
+                    columns=[
+                        "col",
+                        "freq",
+                        "max_value_of_diff_between_periods",
+                        "missing_periods",
+                        "number_of_missing_periods",
+                    ],
                 )
                 df_datetime_continuity = pd.concat(
                     [df_datetime_continuity, df_datetime_continuity_temp], axis=0
@@ -313,7 +336,12 @@ class eda_class:
     ) -> pd.DataFrame:
         df = self.raw_input.copy()
         df_output = pd.DataFrame()
-        for col in df.select_dtypes(exclude=[np.number]).columns:
+
+        # Identify cols for which we need to identify top n most frequent values
+        cols_to_look_into = df.select_dtypes(exclude=[np.number]).columns.tolist()
+        cols_to_remove = self.DTYPES["datetime"]
+        cols_to_look_into = list(set(cols_to_look_into) - set(cols_to_remove))
+        for col in cols_to_look_into:
             df_output[col] = self.top_n_most_frequent_values_in_column(
                 _df=df, col=col, n=n
             )
