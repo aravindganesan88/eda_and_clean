@@ -18,6 +18,6 @@ def assert_dict(actual: dict, expected: dict, not_tested_keys: list = []):
 
 
 def assert_dataframe(actual: pd.DataFrame, expected: pd.DataFrame):
-    # actual = actual.reindex(expected.index)
-    # assert (expected == actual).all().all()
+    actual = actual.reindex(expected.index)
+    actual = actual[expected.columns]
     pd.testing.assert_frame_equal(actual, expected, check_dtype=False)
