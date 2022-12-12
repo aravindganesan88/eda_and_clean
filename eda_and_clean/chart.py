@@ -18,7 +18,7 @@ def set_layout_and_display_2y(
     max_abs_value_main_y: float = None,
     max_abs_value_secondary_y: float = None,
     y_bound_multiple: float = 1.1,
-    barmode_type: str = "relative"
+    barmode_type: str = "relative",
 ):
 
     # Set y as percentage if required
@@ -118,7 +118,7 @@ def set_layout_and_display_1y(
 
     # Set the y axis to be percentage
     if y_is_percentage:
-        figure_object.update_yaxes(tickformat="%")
+        figure_object.update_yaxes(tickformat=",.0%")
 
     return figure_object
 
