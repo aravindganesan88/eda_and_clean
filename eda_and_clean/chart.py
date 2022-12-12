@@ -1,5 +1,7 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # Formating
 def set_layout_and_display_2y(
@@ -311,4 +313,283 @@ def plotly_heatmap(
         height=size,
     )
     """
+    return fig
+
+
+@standard_chart_formatting_2y
+def chart_contribution_effect_with_negative_values_and_2y(
+    _df: pd.DataFrame,
+    bars_positive_list: list,
+    bars_negative_list: list,
+    lines_list: list,
+    round_y2_num_digits=2,
+    **kwargs,
+):
+    """ """
+    df = _df.copy()
+    x = df.index.astype(str)
+
+    fig = go.Figure()
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    bar_sum_pos = 0
+    for col in bars_positive_list:
+        fig.add_trace(
+            go.Bar(x=x, y=df[col].values, name=col, showlegend=True, yaxis="y1")
+        )
+        bar_sum_pos += df[col].fillna(0).values
+
+    bar_sum_neg = 0
+    for col in bars_negative_list:
+        fig.add_trace(
+            go.Bar(x=x, y=-df[col].values, name=col, showlegend=True, yaxis="y1")
+        )
+        bar_sum_neg += df[col].fillna(0).values
+
+    # Largest magnitude in line plots for use in setting bounds
+    max_abs_value_secondary = 0
+    for col in lines_list:
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=df[col].values,
+                name=col,
+                showlegend=True,
+                yaxis="y2",
+                hovertemplate="%{y:." + str(round_y2_num_digits) + "f}",
+            )
+        )
+        max_abs_value_secondary = max(
+            max_abs_value_secondary, max(abs(df[col].dropna()))
+        )
+
+    return fig
+
+
+@standard_chart_formatting_2y
+def chart_bar_and_lines(
+    _df: pd.DataFrame,
+    bar_column: str,
+    line_columns_list: list,
+    are_negative_numbers_possible: bool = False,
+    max_abs_value_main_y: float = None,
+    max_abs_value_secondary_y: float = None,
+    **kwargs,
+):
+    """ """
+    df_output = _df.copy()
+
+    # make index as str so that it is JSON serializable
+    df_output.index = df_output.index.astype(str)
+
+    # Create figure with secondary y-axis
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Add traces
+    fig.add_trace(
+        go.Bar(x=df_output.index, y=df_output[bar_column].values, name=bar_column),
+        secondary_y=False,
+    )
+
+    for line_column in line_columns_list:
+        fig.add_trace(
+            go.Scatter(
+                x=df_output.index, y=df_output[line_column].values, name=line_column
+            ),
+            secondary_y=True,
+        )
+
+    # if numbers could be negative then make some changes
+    if are_negative_numbers_possible:
+        # find max_abs_value_main_y
+        max_abs_value_main_y_actual = df_output[bar_column].abs().max()
+        if max_abs_value_main_y is None:
+            max_abs_value_main_y = max_abs_value_main_y_actual
+
+        # find max_abs_value_secondary_y
+        max_abs_value_secondary_y_actual = (
+            df_output[line_columns_list].abs().max(axis=1).max(axis=0)
+        )
+        if max_abs_value_secondary_y is None:
+            max_abs_value_secondary_y = max_abs_value_secondary_y_actual
+
+    return fig
+
+
+@standard_chart_formatting_1y
+def chart_cohort(
+    _df: pd.DataFrame,
+    cohort_col_name: str,
+    x_axis_col_name: str,
+    color_col_name: str,
+    line_to_be_dashed: str = None,
+    **kwargs,
+):
+    df = _df.copy()
+    df = df.dropna(axis=0, how="all")
+    df = df.reset_index()
+    df = pd.melt(df, id_vars=cohort_col_name).reset_index()
+
+    # create dashed line if required
+    if line_to_be_dashed is not None:
+        temp_col_name = "dashed_or_not"
+        non_dash_line = 0
+        dash_line = 3
+        df[temp_col_name] = non_dash_line
+        df.loc[df[cohort_col_name] == line_to_be_dashed, temp_col_name] = dash_line
+    else:
+        temp_col_name = ""
+
+    df[x_axis_col_name] = df[x_axis_col_name].astype(str)
+    fig = (
+        px.line(
+            df,
+            x=x_axis_col_name,
+            y="value",
+            color=color_col_name,
+            line_dash=temp_col_name,
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(cohort_col_name + "=", ""))
+        )
+        .for_each_trace(lambda t: t.update(name=t.name.replace("00:00:00", "")))
+        .for_each_trace(lambda t: t.update(name=t.name.replace(temp_col_name, "")))
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(", =" + str(non_dash_line), ""))
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(", =" + str(dash_line), ""))
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(color_col_name + "=", ""))
+        )
+        .for_each_trace(lambda t: t.update(name=t.name.replace(", 0", "")))
+        .for_each_trace(lambda t: t.update(name=t.name.replace(", 3", "")))
+    )
+
+    return fig
+
+
+@standard_chart_formatting_2y
+def chart_cohort_2y(
+    _df: pd.DataFrame,
+    _df_ct_ue: pd.DataFrame,
+    cohort_col_name: str,
+    x_axis_col_name: str,
+    x2_axis_col_name: str,
+    y2_axis_col_name: str,
+    color_col_name: str,
+    line_to_be_dashed: str = None,
+    **kwargs,
+):
+    df = _df.copy()
+    # df = df.dropna(axis=0, how="all")
+    df = df.reset_index()
+    df = pd.melt(df, id_vars=cohort_col_name).reset_index()
+    df_ct_ue = _df_ct_ue.copy()
+
+    # Sort values
+    df = df.sort_values(by=[cohort_col_name], ascending=True)
+    df_ct_ue = df_ct_ue.sort_values(by=[x2_axis_col_name], ascending=True)
+
+    # create dashed line if required
+    if line_to_be_dashed is not None:
+        temp_col_name = "dashed_or_not"
+        non_dash_line = 0
+        dash_line = 3
+        df[temp_col_name] = non_dash_line
+        df.loc[df[cohort_col_name] == line_to_be_dashed, temp_col_name] = dash_line
+
+    # primary axis
+    df[x_axis_col_name] = df[x_axis_col_name].astype(str)
+    fig = (
+        px.line(
+            df,
+            x=x_axis_col_name,
+            y="value",
+            color=color_col_name,
+            line_dash=temp_col_name,
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(cohort_col_name + "=", ""))
+        )
+        .for_each_trace(lambda t: t.update(name=t.name.replace("00:00:00", "")))
+        .for_each_trace(lambda t: t.update(name=t.name.replace(temp_col_name, "")))
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(", =" + str(non_dash_line), ""))
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(", =" + str(dash_line), ""))
+        )
+        .for_each_trace(
+            lambda t: t.update(name=t.name.replace(color_col_name + "=", ""))
+        )
+    )
+
+    # secondary axis
+    df_ct_ue[x2_axis_col_name] = df_ct_ue[x2_axis_col_name].astype(str)
+    fig2 = px.bar(df_ct_ue, x=x2_axis_col_name, y=y2_axis_col_name)
+    fig2.update_traces(opacity=0.2)
+    fig2.update_traces(yaxis="y2")
+
+    # Combine the two together
+    subfig = make_subplots(specs=[[{"secondary_y": True}]])
+    subfig.add_traces(fig.data + fig2.data)
+
+    return subfig
+
+
+@standard_chart_formatting_1y
+def stacked_bar_chart(
+    _df: pd.DataFrame,
+    **kwargs,
+):
+    """ """
+    df = _df.copy()
+    df.index = df.index.astype(str)
+
+    x = df.index
+    fig = go.Figure()
+    for col in df.columns:
+        fig.add_trace(go.Bar(x=x, y=df[col].values, name=col))
+
+    fig.update_layout(barmode="relative")
+    return fig
+
+
+@standard_chart_formatting_1y
+def multiple_line_charts(
+    _df: pd.DataFrame,
+    x_col_name: str,
+    y_col_name: str,
+    color_col_name: str = None,
+    hover_col_list: list = None,
+    **kwargs,
+):
+    """ """
+    df = _df.copy()
+
+    if color_col_name is not None:
+        if hover_col_list is not None:
+            fig = px.line(
+                df,
+                x=x_col_name,
+                y=y_col_name,
+                color=color_col_name,
+                hover_data=hover_col_list,
+            ).for_each_trace(
+                lambda t: t.update(name=t.name.replace(color_col_name + "=", ""))
+            )
+        else:
+            fig = px.line(
+                df, x=x_col_name, y=y_col_name, color=color_col_name
+            ).for_each_trace(
+                lambda t: t.update(name=t.name.replace(color_col_name + "=", ""))
+            )
+    else:
+        if hover_col_list is not None:
+            fig = px.line(df, x=x_col_name, y=color_col_name, hover_data=hover_col_list)
+        else:
+            fig = px.line(df, x=x_col_name, y=color_col_name)
+
     return fig
