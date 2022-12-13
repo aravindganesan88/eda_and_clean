@@ -6,6 +6,7 @@ from .utils import filter_non_capitalized_words_from_list, structure_concated_da
 from .clean import clean_class
 from .const import std_vals
 import seaborn as sns
+import scipy.stats as stats
 
 
 class eda_class:
@@ -560,3 +561,41 @@ class eda_class:
             _df_or_groupby_object=df_groupby_object[describe_col_name],
             _df_describe=describe_df,
         )
+
+    def get_2_sample_t_test_result_(
+        self,
+        left: list,
+        right: list,
+    ):
+        """
+        If the variance is <4x lower then we can assume that the variance is eqial
+        """
+
+        left_variance = np.var(left)
+        right_variance = np.var(right)
+        higher_variance = max(left_variance, right_variance)
+        lower_variance = min(left_variance, right_variance)
+        higher_to_lower_variance_ratio = higher_variance / lower_variance
+        if higher_to_lower_variance_ratio > 4:
+            equal_variance = False
+        else:
+            equal_variance = True
+
+        left_mean = np.mean(left)
+        right_mean = np.mean(right)
+
+        t_test_result = stats.ttest_ind(
+            a=left,
+            b=right,
+            equal_var=equal_variance,
+        )
+
+        was_or_was_not = "was" if t_test_result.pvalue < 0.05 else "was not"
+        test_result = f"There {was_or_was_not} a significant difference in the mean of left ({str(left_mean)}) and that of right ({str(right_mean)}); t_stat = {np.round(t_test_result.statistic,2)}, p_value = {np.round(t_test_result.pvalue,2)}."
+        return t_test_result, test_result
+
+    def get_1_sample_t_test_result_(self, a: list, popmean: float = 0.0):
+        tscore, pvalue = stats.ttest_1samp(a, popmean=popmean)
+        pvalue = pvalue / 2
+        test_result = f"Mean of a is {str(np.mean(a))} and the population mean is {str(popmean)}; t_stat = {np.round(tscore,2)}, p_value = {np.round(pvalue,2)}."
+        return tscore, pvalue, test_result
