@@ -531,6 +531,15 @@ class eda_class:
         return df
 
     def cdf_plotly_(self, _df: pd.DataFrame, col: str):
+        """
+        Create CDF plot for any particular column
+
+        Parameters:
+            _df: Pandas dataframe
+            col: Column name for which CDF plot is to be generated
+        Returns:
+            fig: Plotly figure
+        """
         df_ecdf = self.calculate_empirical_cdf(_df=_df, col=col)
 
         # generate_chart
@@ -595,6 +604,18 @@ class eda_class:
         return t_test_result, test_result
 
     def get_1_sample_t_test_result_(self, a: list, popmean: float = 0.0):
+        """
+        Get the t-test result for a sample and a population mean
+
+        Parameters:
+            a, list: sample data
+            popmean, float: population mean
+        Returns:
+            tscore, float: t-statistic
+            pvalue, float: p-value
+            test_result, str: test result
+
+        """
         tscore, pvalue = stats.ttest_1samp(a, popmean=popmean)
         pvalue = pvalue / 2
         test_result = f"Mean of a is {str(np.mean(a))} and the population mean is {str(popmean)}; t_stat = {np.round(tscore,2)}, p_value = {np.round(pvalue,2)}."
